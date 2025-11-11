@@ -10,7 +10,7 @@ class Barangkeluar extends Model
     protected $primaryKey = 'id';
     public $incrementing = true;
     protected $fillable = [
-        'id_barang', 'jumlah', 'tanggal_keluar', 'catatan', 'id_karyawan', 'id_supplier'
+        'id_barang', 'jumlah', 'tanggal_keluar', 'catatan', 'id_karyawan',
     ];
 
     protected $casts = [
