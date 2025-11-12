@@ -22,7 +22,7 @@ class SatuanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nama' => 'required|string|max:100',
+            'nama' => 'required|string|max:100|unique:satuans,nama',
             'kode_satuan' => 'nullable|string|max:255',
 
         ];
