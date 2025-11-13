@@ -20840,6 +20840,8 @@ body,
 html {
   overflow-x: hidden;
   padding-right: 0 !important;
+
+background-color: #000000;
 }
 
 *:-moz-full-screen,
@@ -24110,7 +24112,7 @@ dl li {
 
 /* Sidebar */
 .sidebar {
-  min-height: calc(100vh - 70px);
+  min-height: 100vh;
   background: #191c24;
   font-weight: normal;
   padding: 0;
@@ -25136,3 +25138,30 @@ dl li {
   height: 89vh;
 }
 /*# sourceMappingURL=maps/style.css.map */
+
+
+
+
+input[type="file"].form-control {
+    background-color: #343a40;
+    color: #ffffff;
+    border: 1px solid #495057;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+input[type="file"]::file-selector-button {
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}

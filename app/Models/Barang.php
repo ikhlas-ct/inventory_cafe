@@ -41,4 +41,9 @@ class Barang extends Model
         return $this->hasMany(Barangkeluar::class, 'id_barang','id');
     }
 
+    public function getStokSekarangAttribute()
+    {
+        return $this->barangMasuks->sum('jumlah') - $this->barangKeluars->sum('jumlah');
+    }
+
 }

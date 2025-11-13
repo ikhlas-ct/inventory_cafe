@@ -9,10 +9,19 @@ use App\Http\Requests\KategoriRequest;
 class KategoriController extends Controller
 {
 
-    public function index()
+public function index(Request $request)
     {
-        $kategoris = Kategori::all();
-        return view('pages.kategoris.index', compact('kategoris'));
+        $search = $request->query('search');
+        $query = Kategori::query();
+
+        if ($search) {
+            $query->where('nama', 'LIKE', "%{$search}%")
+                  ->orWhere('deskripsi', 'LIKE', "%{$search}%");
+        }
+
+        $kategoris = $query->paginate(10); // Paginate with 10 items per page
+
+        return view('pages.kategoris.index', compact('kategoris', 'search'));
     }
 
       public function store(KategoriRequest $request)

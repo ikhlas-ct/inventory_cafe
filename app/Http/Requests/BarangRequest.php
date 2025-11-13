@@ -23,13 +23,12 @@ class BarangRequest extends FormRequest
     {
        return [
         'nama' => 'required|string|max:255',
-        'stok' => 'required|integer|min:0',
-        'id_kategori' => 'required|integer|exists:kategori,id',
+        'id_kategori' => 'required|integer|exists:kategoris,id',
         'foto' => 'required|file|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        'id_satuan' => 'required|integer|exists:satuan,id',
+        'id_satuan' => 'required|integer|exists:satuans,id',
         'harga' => 'required|numeric|min:0',
         'deskripsi' => 'required|string|max:1000',
     ];
-    
+
     }
 }

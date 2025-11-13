@@ -22,7 +22,7 @@ class KategoriRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nama' => 'required|string|max:255',
+            'nama' => 'required|string|max:255|unique:kategoris,nama,' ,
             'deskripsi' => 'nullable|string|max:1000',
         ];
     }

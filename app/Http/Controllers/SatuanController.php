@@ -19,7 +19,7 @@ class SatuanController extends Controller
                   ->orWhere('kode_satuan', 'LIKE', "%{$search}%");
         }
 
-        $satuans = $query->paginate(1);
+        $satuans = $query->paginate(5);
 
         return view('pages.satuans.index', compact('satuans', 'search'));
     }
