@@ -25,8 +25,7 @@ class ManajerRequest extends FormRequest
             'nama' => 'required|string|max:255',
             'telepon' => 'required|string|max:20',
             'alamat' => 'required|string',
-            'foto' => 'required|file|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'id_user' => 'required|integer|exists:users,id',
+            'foto' => 'nullable|file|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
     }
 }

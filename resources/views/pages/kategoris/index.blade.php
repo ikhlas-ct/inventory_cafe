@@ -80,7 +80,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="deskripsi" class="form-label">Deskripsi</label>
-                        <textarea class="form-control" id="deskripsi" name="deskripsi" maxlength="1000">{{ old('deskripsi') }}</textarea>
+                        <textarea class="form-control form-control-lg" id="deskripsi" name="deskripsi" maxlength="1000" required>{{ old('deskripsi') }}</textarea>
                         @error('deskripsi')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror

@@ -72,14 +72,14 @@
                         @csrf
                         <div class="mb-3">
                             <label for="nama" class="form-label">Nama</label>
-                            <input type="text" class="form-control" id="nama" name="nama" required maxlength="100">
+                            <input type="text" class="form-control" id="nama" name="nama" maxlength="100" value="{{ old('nama') }}" required>
                             @error('nama')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
                         <div class="mb-3">
                             <label for="kode_satuan" class="form-label">Kode Satuan</label>
-                            <input type="text" class="form-control" id="kode_satuan" name="kode_satuan" maxlength="255">
+                            <input type="text" class="form-control" id="kode_satuan" name="kode_satuan" maxlength="255" value="{{ old('kode_satuan') }}" required>
                             @error('kode_satuan')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror

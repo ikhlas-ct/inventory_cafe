@@ -26,7 +26,6 @@ class KaryawanRequest extends FormRequest
             'telepon' => 'required|string|max:20',
             'alamat' => 'required|string',
             'foto' => 'nullable|file|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'id_user' => 'required|integer|exists:users,id',
         ];
     }
 }

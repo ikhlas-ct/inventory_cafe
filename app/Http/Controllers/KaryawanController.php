@@ -2,93 +2,103 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\KaryawanRequest;
+use App\Http\Requests\UserRequest;
 use App\Models\Karyawan;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class KaryawanController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $karyawans = Karyawan::with('user')->get();
-        return view('pages.karyawans.index', compact('karyawans'));
-    }
+         $search = $request->query('search');
+        $query = Karyawan::with('user');
 
-     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'telepon' => 'required|string|max:20',
-            'alamat' => 'required|string|max:255',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'id_user' => 'required|exists:users,id|unique:karyawans,id_user',
-        ]);
-
-        if ($request->hasFile('foto')) {
-            $validated['foto'] = $request->file('foto')->store('karyawan_fotos', 'public');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('telepon', 'like', "%{$search}%")
+                  ->orWhere('alamat', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q) use ($search) {
+                      $q->where('username', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
         }
 
-        Karyawan::create($validated);
 
-        return redirect()->route('karyawans.index')->with('success', 'Karyawan created successfully.');
+
+        $karyawans = $query->paginate(10);
+        return view('pages.karyawans.index', compact('karyawans'));
     }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Karyawan $karyawan)
+    public function store(UserRequest $userRequest, KaryawanRequest $karyawanRequest)
     {
-        $karyawan->load('user');
-        return view('karyawans.show', compact('karyawan'));
+        $userValidated = $userRequest->validated();
+        $userValidated['role'] = 'karyawan';
+        $userValidated['password'] = Hash::make($userValidated['password']);  // Hash password
+
+        $user = User::create($userValidated);
+
+        $karyawanValidated = $karyawanRequest->validated();
+        $karyawanValidated['id_user'] = $user->id;
+
+        if ($userRequest->hasFile('foto')) {
+            $karyawanValidated['foto'] = $userRequest->file('foto')->store('karyawan_fotos', 'public');
+        }
+        Karyawan::create($karyawanValidated);
+
+        return redirect()->route('karyawans.index')->with('success', 'Karyawan dan User berhasil dibuat.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Karyawan $karyawan)
     {
-        $users = User::whereDoesntHave('karyawan')->orWhere('id', $karyawan->id_user)->get();
-        return view('karyawans.edit', compact('karyawan', 'users'));
+        return view('pages.karyawans.edit', compact('karyawan'));
     }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Karyawan $karyawan)
+    public function update(UserRequest $userRequest, KaryawanRequest $karyawanRequest, Karyawan $karyawan)
     {
-        $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'telepon' => 'required|string|max:20',
-            'alamat' => 'required|string|max:255',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'id_user' => 'required|exists:users,id|unique:karyawans,id_user,' . $karyawan->id,
-        ]);
+        // Update User
+        $user = $karyawan->user;
+        $userValidated = $userRequest->validated();
+        if (!empty($userValidated['password'])) {
+            $userValidated['password'] = Hash::make($userValidated['password']);
+        } else {
+            unset($userValidated['password']);  // Jangan update kalau kosong
+        }
+        $user->update($userValidated);
 
-        if ($request->hasFile('foto')) {
+        // Update Karyawan
+        $karyawanValidated = $karyawanRequest->validated();
+
+        // Handle foto
+        if ($userRequest->hasFile('foto')) {
             if ($karyawan->foto) {
                 Storage::disk('public')->delete($karyawan->foto);
             }
-            $validated['foto'] = $request->file('foto')->store('karyawan_fotos', 'public');
+            $karyawanValidated['foto'] = $userRequest->file('foto')->store('karyawan_fotos', 'public');
         }
 
-        $karyawan->update($validated);
+        $karyawan->update($karyawanValidated);
 
-        return redirect()->route('karyawans.index')->with('success', 'Karyawan updated successfully.');
+        return redirect()->route('karyawans.index')->with('success', 'Karyawan dan User berhasil diupdate.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Karyawan $karyawan)
     {
+        $user = $karyawan->user;
+
         if ($karyawan->foto) {
             Storage::disk('public')->delete($karyawan->foto);
         }
+
         $karyawan->delete();
-        return redirect()->route('karyawans.index')->with('success', 'Karyawan deleted successfully.');
+
+        if ($user) {
+            $user->delete();
+        }
+
+        return redirect()->route('karyawans.index')->with('success', 'Karyawan dan User berhasil dihapus.');
     }
 }

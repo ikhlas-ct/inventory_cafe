@@ -89,15 +89,15 @@
                         @csrf
                         <div class="mb-3">
                             <label for="nama" class="form-label">Nama</label>
-                            <input type="text" class="form-control" id="nama" name="nama" required maxlength="255">
+                            <input type="text" class="form-control" id="nama" name="nama" maxlength="255" value="{{ old('nama') }}" required>
                             @error('nama')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
                         <div class="mb-3">
                             <label for="id_kategori" class="form-label">Kategori</label>
-                            <select class="form-control" id="id_kategori" name="id_kategori" required>
-                                @foreach (\App\Models\Kategori::all() as $kategori)
+                            <select class="form-select" id="id_kategori" name="id_kategori" value="{{ old('id_kategori') }}" required>
+                                @foreach ($kategoris as $kategori)
                                     <option value="{{ $kategori->id }}">{{ $kategori->nama }}</option>
                                 @endforeach
                             </select>
@@ -107,8 +107,8 @@
                         </div>
                         <div class="mb-3">
                             <label for="id_satuan" class="form-label">Satuan</label>
-                            <select class="form-control" id="id_satuan" name="id_satuan" required>
-                                @foreach (\App\Models\Satuan::all() as $satuan)
+                            <select class="form-select" id="id_satuan" name="id_satuan" value="{{ old('id_satuan') }}" required>
+                                @foreach ($satuans as $satuan)
                                     <option value="{{ $satuan->id }}">{{ $satuan->nama }}</option>
                                 @endforeach
                             </select>
@@ -118,21 +118,21 @@
                         </div>
                         <div class="mb-3">
                             <label for="harga" class="form-label">Harga</label>
-                            <input type="number" step="0.01" class="form-control" id="harga" name="harga" required min="0">
+                            <input type="number" step="0.01" class="form-control" id="harga" name="harga" value="{{ old('harga') }}" required min="0">
                             @error('harga')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
                         <div class="mb-3">
                             <label for="deskripsi" class="form-label">Deskripsi</label>
-                            <textarea class="form-control" id="deskripsi" name="deskripsi" maxlength="1000"></textarea>
+                            <textarea class="form-control" id="deskripsi" name="deskripsi" maxlength="1000" required>{{ old('deskripsi') }}</textarea>
                             @error('deskripsi')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
                         <div class="mb-3">
                             <label for="foto" class="form-label">Foto</label>
-                            <input type="file" class="form-control" id="foto" name="foto">
+                            <input type="file" class="form-control" id="foto" name="foto" required>
                             @error('foto')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror

@@ -6,26 +6,43 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UserRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
-          return [
-            'username' => 'required|string|max:255',
-            'email' => 'required|string|max:100',
-            'password' => 'required|string',
-            'role' => 'required|string|in:karyawan,manajer',
+        $userId = $this->getCurrentUserIdForIgnore();
+
+        $rules = [
+            'username' => 'required|string|max:255|unique:users,username',
+            'email'    => 'required|email|max:100|unique:users,email',
         ];
+
+        // CREATE
+        if ($this->isMethod('POST')) {
+            $rules['password'] = 'required|string|min:8';
+        }
+
+        if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
+            $rules['password'] = 'nullable|string|min:8';
+
+            if ($userId) {
+                $rules['email'] .= ',' . $userId;
+                $rules['username'] .= ',' . $userId;
+            }
+        }
+
+        return $rules;
+    }
+
+
+    private function getCurrentUserIdForIgnore()
+    {
+        $model = $this->route('karyawan')
+                ?? $this->route('manajer');
+
+        return $model && $model->user ? $model->user->id : null;
     }
 }

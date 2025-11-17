@@ -13,6 +13,8 @@ class BarangController extends Controller
 {
     public function index(Request $request)
     {
+        $satuans = Satuan::all();
+        $kategoris = Kategori::all();
         $search = $request->query('search');
         $query = Barang::with(['kategori', 'satuan']);
 
@@ -23,7 +25,7 @@ class BarangController extends Controller
 
         $barangs = $query->paginate(10); // Paginate with 10 items per page
 
-        return view('pages.barangs.index', compact('barangs', 'search'));
+        return view('pages.barangs.index', compact('barangs', 'search', 'kategoris', 'satuans'));
     }
 
     public function store(BarangRequest $request)

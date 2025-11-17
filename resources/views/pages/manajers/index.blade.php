@@ -1,17 +1,17 @@
-!@extends('layouts.app')
+@extends('layouts.app')
 
-@section('title', 'Karyawan')
+@section('title', 'Manajer')
 
 @section('content')
     <div class="row">
         <div class="col-lg-12 grid-margin stretch-card">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title">Table Karyawans</h4>
-                    @include('partials.alert') <!-- Include the alert partial here -->
+                    <h4 class="card-title">Table Manajers</h4>
+                    @include('partials.alert')
 
                     <!-- Search Form -->
-                    <form action="{{ route('karyawans.index') }}" method="GET" class="mb-3">
+                    <form action="{{ route('manajers.index') }}" method="GET" class="mb-3">
                         <div class="input-group">
                             <input type="text" name="search" class="form-control" placeholder="Search by nama, telepon, alamat, email, username" value="{{ $search ?? '' }}">
                             <button type="submit" class="btn btn-primary">Search</button>
@@ -19,7 +19,7 @@
                     </form>
 
                     <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createModal">
-                        Tambah Karyawan
+                        Tambah Manajer
                     </button>
                     <div class="table-responsive">
                         <table class="table table-striped">
@@ -37,25 +37,25 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($karyawans as $key => $karyawan)
+                                @foreach ($manajers as $key => $manajer)
                                     <tr>
-                                        <td>{{ $karyawans->firstItem() + $key }}</td>
-                                        <td>{{ $karyawan->user->username ?? '-' }}</td>
-                                        <td>{{ $karyawan->user->email ?? '-' }}</td>
-                                        <td>{{ $karyawan->user->role ?? '-' }}</td>
-                                        <td>{{ $karyawan->nama }}</td>
-                                        <td>{{ $karyawan->telepon ?? '-' }}</td>
-                                        <td>{{ $karyawan->alamat ?? '-' }}</td>
+                                        <td>{{ $manajers->firstItem() + $key }}</td>
+                                        <td>{{ $manajer->user->username ?? '-' }}</td>
+                                        <td>{{ $manajer->user->email ?? '-' }}</td>
+                                        <td>{{ $manajer->user->role ?? '-' }}</td>
+                                        <td>{{ $manajer->nama }}</td>
+                                        <td>{{ $manajer->telepon ?? '-' }}</td>
+                                        <td>{{ $manajer->alamat ?? '-' }}</td>
                                         <td>
-                                            @if ($karyawan->foto)
-                                                <img src="{{ asset('storage/' . $karyawan->foto) }}" alt="Foto Karyawan" width="50">
+                                            @if ($manajer->foto)
+                                                <img src="{{ asset('storage/' . $manajer->foto) }}" alt="Foto Manajer" width="50">
                                             @else
                                                 -
                                             @endif
                                         </td>
                                         <td>
-                                            <a href="{{ route('karyawans.edit', $karyawan->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                            <form action="{{ route('karyawans.destroy', $karyawan->id) }}" method="POST" style="display: inline;">
+                                            <a href="{{ route('manajers.edit', $manajer->id) }}" class="btn btn-warning btn-sm">Edit</a>
+                                            <form action="{{ route('manajers.destroy', $manajer->id) }}" method="POST" style="display: inline;">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
@@ -68,7 +68,7 @@
                     </div>
 
                     <div class="mt-3">
-                        {{ $karyawans->links('pagination::bootstrap-5') }}
+                        {{ $manajers->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             </div>
@@ -80,12 +80,14 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="createModalLabel">Tambah Karyawan</h5>
+                    <h5 class="modal-title" id="createModalLabel">Tambah Manajer</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form action="{{ route('karyawans.store') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('manajers.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
+                        <!-- Fields untuk User -->
+                        <h5 >Data User</h5>
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input type="text" class="form-control" id="username" name="username" required maxlength="255" value="{{ old('username') }}">
@@ -107,7 +109,9 @@
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
-                  
+
+                        <!-- Fields untuk Manajer -->
+                        <h5 class="mt-4">Data Manajer</h5>
                         <div class="mb-3">
                             <label for="nama" class="form-label">Nama</label>
                             <input type="text" class="form-control" id="nama" name="nama" required maxlength="255" value="{{ old('nama') }}">

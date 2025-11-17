@@ -65,6 +65,16 @@
               <span class="menu-title">Dashboard</span>
             </a>
           </li>
+        <li class="nav-item menu-items">
+            <a class="nav-link" href="{{ route('karyawans.index') }}">
+              <span class="menu-icon">
+                <i class="mdi mdi-contacts"></i>
+              </span>
+              <span class="menu-title">Karyawan</span>
+              <i class="menu-arrow"></i>
+            </a>
+          </li>
+
 
           <li class="nav-item menu-items">
             <a class="nav-link" href="{{ route('satuans.index') }}">
@@ -94,24 +104,17 @@
               <i class="menu-arrow"></i>
             </a>
           </li>
-          <li class="nav-item menu-items">
-            <a class="nav-link" data-bs-toggle="collapse" href="#auth" aria-expanded="false" aria-controls="auth">
+           <li class="nav-item menu-items">
+            <a class="nav-link" href="{{ route('suppliers.index') }}">
               <span class="menu-icon">
-                <i class="mdi mdi-security"></i>
+                <i class="mdi mdi-contacts"></i>
               </span>
-              <span class="menu-title">User Pages</span>
+              <span class="menu-title">Supplier</span>
               <i class="menu-arrow"></i>
             </a>
-            <div class="collapse" id="auth">
-              <ul class="nav flex-column sub-menu">
-                <li class="nav-item"> <a class="nav-link" href="pages/samples/login.html"> Login </a></li>
-                <li class="nav-item"> <a class="nav-link" href="pages/samples/register.html"> Register </a></li>
-                <li class="nav-item"> <a class="nav-link" href="pages/samples/error-404.html"> 404 </a></li>
-                <li class="nav-item"> <a class="nav-link" href="pages/samples/error-500.html"> 505 </a></li>
-                <li class="nav-item"> <a class="nav-link" href="pages/samples/blank-page.html"> Blank Page </a></li>
-              </ul>
-            </div>
           </li>
+
+
           <li class="nav-item menu-items">
             <a class="nav-link" href="docs/documentation.html">
               <span class="menu-icon">
