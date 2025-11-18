@@ -26,7 +26,6 @@ class BarangKeluarRequest extends FormRequest
             'jumlah' => 'required|integer|min:1',
             'tanggal_keluar' => 'required|date',
             'catatan' => 'required|string|',
-            'id_karyawan' => 'required|string|exists:karyawans,id',
         ];
     }
 }
