@@ -26,8 +26,6 @@ class BarangMasukRequest extends FormRequest
             'jumlah' => 'required|integer|min:1',
             'tanggal_masuk' => 'required|date',
             'catatan' => 'required|string|max:255',
-            'harga_beli' => 'required|numeric|min:0',
-            'id_karyawan' => 'required|string|exists:karyawans,id',
             'id_supplier' => 'required|string|exists:suppliers,id',
         ];
     }

@@ -13,7 +13,7 @@ class Barang extends Model
       protected $primaryKey = 'id';
       public $incrementing = true;
       protected $fillable = [
-        'nama', 'id_kategori', 'id_satuan', 'harga', 'deskripsi', 'foto'];
+        'nama', 'id_kategori', 'id_satuan', 'harga', 'deskripsi', 'foto','stok'];
 
         protected $casts = [
         'harga' => 'decimal:2'
@@ -40,10 +40,11 @@ class Barang extends Model
     {
         return $this->hasMany(Barangkeluar::class, 'id_barang','id');
     }
-
     public function getStokSekarangAttribute()
     {
-        return $this->barangMasuks->sum('jumlah') - $this->barangKeluars->sum('jumlah');
+        return $this->stok;
     }
+
+
 
 }
