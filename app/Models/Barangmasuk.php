@@ -13,7 +13,7 @@ class Barangmasuk extends Model
     protected $primaryKey = 'id';
     public $incrementing = true;
     protected $fillable = [
-        'id_karyawan','nomor_transaksi', 'tanggal_masuk', 'catatan',
+        'id_user','nomor_transaksi', 'tanggal_masuk', 'catatan',
     ];
 
     protected $casts = [
@@ -22,9 +22,9 @@ class Barangmasuk extends Model
 
 
 
-    public function karyawan()
+    public function user()
     {
-        return $this->belongsTo(Karyawan::class, 'id_karyawan','id');
+        return $this->belongsTo(User::class, 'id_user', 'id');
     }
     public function barangmasukdetail()
     {

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Barang;
 use App\Models\Satuan;
 use App\Models\Kategori;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use App\Models\BarangMasukDetail;
 use App\Http\Requests\BarangRequest;
 use Illuminate\Support\Facades\Storage;
 
@@ -30,10 +32,59 @@ class BarangController extends Controller
 
         $barangs = $query->paginate(10);
 
-        return view('pages.barangs.index', compact('barangs', 'search', 'kategoris', 'satuans'));
+        // Query untuk stok mendekati kadaluarsa
+        $details = BarangMasukDetail::with(['barang', 'barangMasuk'])
+            ->where('jumlah_tersisa', '>', 0)
+            ->get();
+
+        $expiring = [];
+        $now = Carbon::now();
+
+        foreach ($details as $detail) {
+            $kadaluarsa = $detail->tanggal_kadaluarsa;
+            if (!$kadaluarsa) {
+                continue;
+            }
+
+            $masuk = $detail->barangMasuk->tanggal_masuk;
+            $sisa_hari_float = $kadaluarsa->diffInHours($now, false) / 24.0;
+            $sisa_hari = round($sisa_hari_float);
+            if ($sisa_hari == 0) {
+                $sisa_hari = ($sisa_hari_float > 0) ? 1 : -1;
+            }
+            $total_hari = $kadaluarsa->diffInHours($masuk, true) / 24.0;
+
+            if ($total_hari <= 0) {
+                continue;
+            }
+
+            $persen_sisa = ($sisa_hari_float / $total_hari) * 100;
+
+            // Aturan seleksi
+            if ($sisa_hari > 90) {
+                continue;
+            }
+            if ($persen_sisa > 50 && $sisa_hari >= 5) {
+                continue;
+            }
+            // Else: ambil (termasuk persen >50 tapi sisa <5, persen <=50, atau sisa <0)
+
+            $key = $detail->id_barang . '_' . $kadaluarsa->format('Y-m-d');
+            if (!array_key_exists($key, $expiring)) {
+                $expiring[$key] = [
+                    'barang' => $detail->barang,
+                    'kadaluarsa' => $kadaluarsa,
+                    'sisa_hari' => $sisa_hari,
+                    'stok' => 0,
+                ];
+            }
+            $expiring[$key]['stok'] += $detail->jumlah_tersisa;
+        }
+
+        $expiringStocks = collect($expiring)->sortBy('sisa_hari')->values();
+
+        return view('pages.barangs.index', compact('barangs', 'search', 'kategoris', 'satuans', 'expiringStocks'));
     }
-
-
     public function create()
     {
         $kategoris = Kategori::all();

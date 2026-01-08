@@ -73,10 +73,39 @@
                     <div class="mt-3">
                         {{ $barangs->links('pagination::bootstrap-5') }} <!-- Use Bootstrap 5 pagination -->
                     </div>
+
+                    <!-- New Table for Expiring Stocks -->
+                    <h4 class="card-title mt-5">Stok Barang yang Akan Habis Masa Kadaluarsa</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama Barang</th>
+                                    <th>Tanggal Kadaluarsa</th>
+                                    <th>Jumlah Stok</th>
+                                    <th>Sisa Hari</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($expiringStocks as $key => $item)
+                                    <tr @if ($item['sisa_hari'] < 0) class="bg-primary text-white" @elseif ($item['sisa_hari'] < 5) class="bg-warning text-dark" @endif>
+                                        <td>{{ $key + 1 }}</td>
+                                        <td>{{ $item['barang']->nama }}</td>
+                                        <td>{{ $item['kadaluarsa']->format('d-m-Y') }}</td>
+                                        <td>{{ $item['stok'] }}</td>
+                                        <td>{{ $item['sisa_hari'] }} hari</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center">Tidak ada stok yang mendekati kadaluarsa.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-
 @endsection

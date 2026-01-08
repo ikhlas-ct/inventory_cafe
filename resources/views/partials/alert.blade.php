@@ -86,6 +86,6 @@
                 var alert = new bootstrap.Alert(alertElement);
                 alert.close();
             }
-        }, 2000); // Close after 2 seconds
+        }, 5000); // Close after 2 seconds
     </script>
 @endif

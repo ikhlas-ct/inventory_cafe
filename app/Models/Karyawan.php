@@ -18,13 +18,5 @@ class Karyawan extends Model
     {
         return $this->belongsTo(User::class, 'id_user', 'id');
     }
-    public function barangMasuks()
-    {
-        return $this->hasMany(BarangMasuk::class, 'id_karyawan', 'id');
-    }
-
-    public function barangKeluars()
-    {
-        return $this->hasMany(BarangKeluar::class, 'id_karyawan', 'id');
-    }
+ 
 }

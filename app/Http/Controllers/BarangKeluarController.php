@@ -4,99 +4,218 @@ namespace App\Http\Controllers;
 
 use App\Models\Barang;
 use App\Models\Barangkeluar;
+use App\Models\BarangKeluarDetail;
+use App\Models\BarangMasukDetail;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Requests\BarangKeluarRequest;
 
 class BarangKeluarController extends Controller
 {
-  public function index(Request $request)
+    public function index()
     {
-        $search = $request->query('search');
-        $barangs = Barang::all();
-        $query = Barangkeluar::with(['barang', 'karyawan']);
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('barang', function ($q) use ($search) {
-                    $q->where('nama', 'like', "%{$search}%");
-                })->orWhereHas('supplier', function ($q) use ($search) {
-                    $q->where('nama', 'like', "%{$search}%");
-                })->orWhereHas('karyawan', function ($q) use ($search) {
-                    $q->where('nama', 'like', "%{$search}%");
-                })->orWhere('catatan', 'like', "%{$search}%");
-            });
-        }
-
-        $barangkeluars = $query->paginate(10);
-
-        return view('pages.barangkeluars.index', compact('barangkeluars', 'search', 'barangs', ));
+        $barangkeluars = Barangkeluar::with('user')->latest()->paginate(10);
+        return view('pages.barangkeluars.index', compact('barangkeluars'));
     }
 
-      public function store(BarangKeluarRequest $request)
+    public function create()
     {
-        $validated = $request->validated();
+        $barangs = Barang::all();
+        return view('pages.barangkeluars.create', compact('barangs'));
+    }
 
-        $validated['id_karyawan'] = Auth::user()->karyawan->id;
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'tanggal_keluar' => 'required|date',
+            'catatan' => 'nullable|string|max:1000',
+            'details' => 'required|array|min:1',
+            'details.*.id_barang' => 'required|exists:barangs,id',
+            'details.*.jumlah' => 'required|integer|min:1',
+        ]);
 
-        $barang = Barang::find($validated['id_barang']);
+        DB::transaction(function () use ($validated) {
+            $today = now()->format('Ymd');
+            $count = Barangkeluar::withTrashed()
+                ->whereDate('created_at', now()->toDateString())
+                ->count() + 1;
+            $nomor_transaksi = 'BK-' . $today . '-' . sprintf('%03d', $count);
 
-        $currentstock = $barang->stok;
-        $newJumlah = $validated['jumlah'];
+            $barangKeluar = Barangkeluar::create([
+                'id_user' => Auth::id(),
+                'nomor_transaksi' => $nomor_transaksi,
+                'tanggal_keluar' => $validated['tanggal_keluar'],
+                'catatan' => $validated['catatan'] ?? null,
+            ]);
 
-        if ($newJumlah > $currentstock) {
-            return redirect()->back()->withErrors(['jumlah' => 'Stok barang tidak mencukupi untuk keluar sebanyak ' . $newJumlah . '. Stok saat ini: ' . $currentstock])->withInput();
-        }
+            $details = collect($validated['details'])->groupBy('id_barang');
 
+            foreach ($details as $id_barang => $group) {
+                $totalJumlah = $group->sum('jumlah');
 
-        Barangkeluar::create($validated);
-        $barang->decrement('stok', $validated['jumlah']);
+                // Validasi sisa stok sebelum proses
+                $sisaStok = BarangMasukDetail::where('id_barang', $id_barang)->sum('jumlah_tersisa');
+                if ($totalJumlah > $sisaStok) {
+                    throw ValidationException::withMessages([
+                        'details' => "Jumlah keluar melebihi sisa stok untuk barang ID {$id_barang}. Sisa stok: {$sisaStok}",
+                    ]);
+                }
 
+                $keluarDetail = BarangKeluarDetail::create([
+                    'id_barang_keluar' => $barangKeluar->id,
+                    'id_barang' => $id_barang,
+                    'jumlah' => $totalJumlah,
+                ]);
 
-        return redirect()->route('barangkeluars.index')->with('success', 'Barang Keluar berhasil dibuat.');
+                $this->deductFromMasuk($id_barang, $totalJumlah);
+            }
+        });
+
+        return redirect()->route('barangkeluars.index')->with('success', 'Barang keluar berhasil ditambahkan.');
+    }
+
+    public function show(Barangkeluar $barangkeluar)
+    {
+        $barangkeluar->load('barangkeluardetail.barang', 'user.karyawan');
+        return view('pages.barangkeluars.detail', compact('barangkeluar'));
     }
 
     public function edit(Barangkeluar $barangkeluar)
     {
         $barangs = Barang::all();
+        $barangkeluar->load('barangkeluardetail');
         return view('pages.barangkeluars.edit', compact('barangkeluar', 'barangs'));
     }
 
-    public function update(BarangKeluarRequest $request, Barangkeluar $barangkeluar)
+    public function update(Request $request, Barangkeluar $barangkeluar)
     {
-        $validated = $request->validated();
-        $barang = Barang::find($validated['id_barang']);
+        $validated = $request->validate([
+            'tanggal_keluar' => 'required|date',
+            'catatan' => 'nullable|string|max:1000',
+            'details' => 'required|array|min:1',
+            'details.*.id' => 'sometimes|exists:barang_keluar_details,id',
+            'details.*.id_barang' => 'required|exists:barangs,id',
+            'details.*.jumlah' => 'required|integer|min:1',
+        ]);
 
-        $currentstock = $barang->stok ;
-        $newjumlah = $validated['jumlah'];
-        $oldjumlah = $barangkeluar->jumlah;
+        DB::transaction(function () use ($validated, $barangkeluar) {
+            $barangkeluar->update([
+                'tanggal_keluar' => $validated['tanggal_keluar'],
+                'catatan' => $validated['catatan'] ?? null,
+            ]);
 
-        $fixstock = ($currentstock + $oldjumlah) - $newjumlah;
+            $submittedDetails = collect($validated['details']);
+            $submittedIds = $submittedDetails->filter(fn($item) => isset($item['id']))->pluck('id')->toArray();
+            $existingDetails = $barangkeluar->barangkeluardetail->keyBy('id');
 
-        if ($fixstock < 0) {
-            return redirect()->back()->withErrors(['jumlah' => 'Stok barang tidak mencukupi untuk keluar sebanyak ' . $newjumlah . '. Stok saat ini: ' . $currentstock])->withInput();
-        }
+            // Handle deletes
+            $detailsToDelete = $existingDetails->except($submittedIds);
+            foreach ($detailsToDelete as $detail) {
+                $this->addBackToMasuk($detail->id_barang, $detail->jumlah);
+                $detail->delete();
+            }
 
-        $barangkeluar->update($validated);
-        $barangkeluar->barang->decrement('stok', $validated['jumlah']);
+            // Group submitted by id_barang for new and updates
+            $groupedSubmitted = $submittedDetails->groupBy('id_barang');
 
-        $barang = $barangkeluar->barang; // Reload jika perlu, tapi biasanya OK
-        $barang->stok = $fixstock;
-        $barang->save();
+            // Reload to get current state
+            $barangkeluar->load('barangkeluardetail');
+            $currentDetails = $barangkeluar->barangkeluardetail->keyBy('id_barang');
 
-        return redirect()->route('barangkeluars.index')->with('success', 'Barang Keluar berhasil diperbarui.');
+            foreach ($groupedSubmitted as $id_barang => $group) {
+                $totalJumlah = $group->sum('jumlah');
+
+                // Validasi sisa stok sebelum proses (akumulasi dengan yang ada jika update)
+                $sisaStok = BarangMasukDetail::where('id_barang', $id_barang)->sum('jumlah_tersisa');
+                $existingJumlah = $currentDetails->get($id_barang)->jumlah ?? 0;
+                $netJumlah = $totalJumlah - $existingJumlah;
+                if ($netJumlah > $sisaStok) {
+                    throw ValidationException::withMessages([
+                        'details' => "Jumlah keluar melebihi sisa stok untuk barang ID {$id_barang}. Sisa stok: {$sisaStok}",
+                    ]);
+                }
+
+                $existing = $currentDetails->get($id_barang);
+                if ($existing) {
+                    // Update existing
+                    $oldJumlah = $existing->jumlah;
+                    $this->addBackToMasuk($id_barang, $oldJumlah);
+                    $existing->jumlah = $totalJumlah;
+                    $existing->save();
+                    $this->deductFromMasuk($id_barang, $totalJumlah);
+                } else {
+                    // New
+                    $newDetail = BarangKeluarDetail::create([
+                        'id_barang_keluar' => $barangkeluar->id,
+                        'id_barang' => $id_barang,
+                        'jumlah' => $totalJumlah,
+                    ]);
+                    $this->deductFromMasuk($id_barang, $totalJumlah);
+                }
+            }
+        });
+
+        return redirect()->route('barangkeluars.index')->with('success', 'Barang keluar berhasil diupdate.');
     }
 
     public function destroy(Barangkeluar $barangkeluar)
     {
-        // Kembalikan stok barang sebelum menghapus record
-        $barang = $barangkeluar->barang;
-        $barang->increment('stok', $barangkeluar->jumlah);
+        DB::transaction(function () use ($barangkeluar) {
+            foreach ($barangkeluar->barangkeluardetail as $detail) {
+                $this->addBackToMasuk($detail->id_barang, $detail->jumlah);
+                $detail->delete();
+            }
+            $barangkeluar->delete();
+        });
 
-        $barangkeluar->delete();
-
-        return redirect()->route('barangkeluars.index')->with('success', 'Barang Keluar berhasil dihapus.');
+        return redirect()->route('barangkeluars.index')->with('success', 'Barang keluar berhasil dihapus.');
     }
 
+    private function deductFromMasuk($id_barang, $jumlah)
+    {
+        $remaining = $jumlah;
+        $masukDetails = BarangMasukDetail::where('id_barang', $id_barang)
+            ->where('jumlah_tersisa', '>', 0)
+            ->orderByRaw('tanggal_kadaluarsa IS NULL DESC, tanggal_kadaluarsa DESC')
+            ->get();
 
+        foreach ($masukDetails as $masukDetail) {
+            if ($remaining <= 0) break;
+            $take = min($remaining, $masukDetail->jumlah_tersisa);
+            $masukDetail->jumlah_tersisa -= $take;
+            $masukDetail->save();
+            $remaining -= $take;
+        }
+
+        if ($remaining > 0) {
+            throw ValidationException::withMessages([
+                'details' => "Stok tidak cukup untuk barang ID {$id_barang}.",
+            ]);
+        }
+    }
+
+    private function addBackToMasuk($id_barang, $jumlah)
+    {
+        $remaining = $jumlah;
+        $masukDetails = BarangMasukDetail::where('id_barang', $id_barang)
+            ->whereRaw('jumlah_tersisa < jumlah')
+            ->orderByRaw('tanggal_kadaluarsa IS NULL DESC, tanggal_kadaluarsa DESC')
+            ->get();
+
+        foreach ($masukDetails as $masukDetail) {
+            if ($remaining <= 0) break;
+            $room = $masukDetail->jumlah - $masukDetail->jumlah_tersisa;
+            $add = min($remaining, $room);
+            $masukDetail->jumlah_tersisa += $add;
+            $masukDetail->save();
+            $remaining -= $add;
+        }
+
+        if ($remaining > 0) {
+            throw ValidationException::withMessages([
+                'details' => "Tidak dapat menambahkan kembali stok untuk barang ID {$id_barang}.",
+            ]);
+        }
+    }
 }

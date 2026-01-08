@@ -1,31 +1,26 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Barang Keluar')
+@section('title', 'Tambah Barang Keluar')
 
 @section('content')
     <div class="row">
         <div class="col-lg-12 grid-margin stretch-card">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title">Edit Barang Keluar</h4>
-                    @if (session('success'))
-                        <div class="alert alert-success">
-                            {{ session('success') }}
-                        </div>
-                    @endif
-                    <form action="{{ route('barangkeluars.update', $barangkeluar->id) }}" method="POST">
+                    <h4 class="card-title">Tambah Barang Keluar</h4>
+                    @include('partials.alert')
+                    <form action="{{ route('barangkeluars.store') }}" method="POST">
                         @csrf
-                        @method('PUT')
                         <div class="mb-3">
                             <label for="tanggal_keluar" class="form-label">Tanggal Keluar</label>
-                            <input type="date" class="form-control" id="tanggal_keluar" name="tanggal_keluar" value="{{ $barangkeluar->tanggal_keluar->format('Y-m-d') }}" required>
+                            <input type="date" class="form-control" id="tanggal_keluar" name="tanggal_keluar" value="{{ old('tanggal_keluar', now()->format('Y-m-d')) }}" required>
                             @error('tanggal_keluar')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
                         <div class="mb-3">
                             <label for="catatan" class="form-label">Catatan</label>
-                            <textarea class="form-control" id="catatan" name="catatan" maxlength="1000">{{ $barangkeluar->catatan }}</textarea>
+                            <textarea class="form-control" id="catatan" name="catatan" maxlength="1000">{{ old('catatan') }}</textarea>
                             @error('catatan')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -40,31 +35,31 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($barangkeluar->barangkeluardetail as $index => $detail)
-                                        <tr class="detail-row">
-                                            <td>
-                                                <input type="hidden" name="details[{{ $index }}][id]" value="{{ $detail->id }}">
-                                                <select class="form-control" name="details[{{ $index }}][id_barang]" required>
-                                                    @foreach ($barangs as $barang)
-                                                        <option value="{{ $barang->id }}" {{ $barang->id == $detail->id_barang ? 'selected' : '' }}>{{ $barang->nama }} ({{ $barang->kode_barang }})</option>
-                                                    @endforeach
-                                                </select>
-                                                @error("details.$index.id_barang")
-                                                    <div class="text-danger">{{ $message }}</div>
-                                                @enderror
-                                            </td>
-                                            <td>
-                                                <input type="number" class="form-control" name="details[{{ $index }}][jumlah]" value="{{ $detail->jumlah }}" required min="1">
-                                                @error("details.$index.jumlah")
-                                                    <div class="text-danger">{{ $message }}</div>
-                                                @enderror
-                                            </td>
-                                            <td>
-                                                <button type="button" class="btn btn-danger remove-row">Remove</button>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                    @if ($barangkeluar->barangkeluardetail->isEmpty())
+                                    @if (old('details'))
+                                        @foreach (old('details') as $index => $oldDetail)
+                                            <tr class="detail-row">
+                                                <td>
+                                                    <select class="form-control" name="details[{{ $index }}][id_barang]" required>
+                                                        @foreach ($barangs as $barang)
+                                                            <option value="{{ $barang->id }}" {{ old("details.$index.id_barang") == $barang->id ? 'selected' : '' }}>{{ $barang->nama }} ({{ $barang->kode_barang }})</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error("details.$index.id_barang")
+                                                        <div class="text-danger">{{ $message }}</div>
+                                                    @enderror
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control" name="details[{{ $index }}][jumlah]" value="{{ old("details.$index.jumlah") }}" required min="1">
+                                                    @error("details.$index.jumlah")
+                                                        <div class="text-danger">{{ $message }}</div>
+                                                    @enderror
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-danger remove-row">Remove</button>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @else
                                         <tr class="detail-row">
                                             <td>
                                                 <select class="form-control" name="details[0][id_barang]" required>
@@ -91,7 +86,7 @@
                             </table>
                         </div>
                         <button type="button" class="btn btn-secondary mt-3" id="add-row">Add Row</button>
-                        <button type="submit" class="btn btn-primary mt-3">Update</button>
+                        <button type="submit" class="btn btn-primary mt-3">Tambah</button>
                         <a href="{{ route('barangkeluars.index') }}" class="btn btn-secondary mt-3">Batal</a>
                     </form>
                 </div>
@@ -102,24 +97,16 @@
 
 @section('scripts')
     <script>
-        let rowIndex = {{ $barangkeluar->barangkeluardetail->count() ?: 1 }};
+        let rowIndex = {{ old('details') ? count(old('details')) : 1 }};
 
         document.getElementById('add-row').addEventListener('click', function() {
             const tableBody = document.querySelector('#detail-table tbody');
             const newRow = tableBody.querySelector('.detail-row').cloneNode(true);
 
-            const hiddenId = newRow.querySelector('input[type="hidden"]');
-            if (hiddenId) {
-                hiddenId.remove();
-            }
-
             newRow.querySelectorAll('input, select').forEach(function(element) {
                 const name = element.name.replace(/\[\d+\]/, '[' + rowIndex + ']');
                 element.name = name;
                 element.value = '';
-                if (element.tagName === 'SELECT') {
-                    element.selectedIndex = 0;
-                }
             });
 
             newRow.querySelector('.remove-row').addEventListener('click', function() {

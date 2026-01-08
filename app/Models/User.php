@@ -61,6 +61,16 @@ class User extends Authenticatable
         return $this->hasOne(Manajer::class, 'id_user');
     }
 
+    public function barangMasuks()
+    {
+        return $this->hasMany(BarangMasuk::class, 'id_karyawan', 'id');
+    }
+
+    public function barangKeluars()
+    {
+        return $this->hasMany(BarangKeluar::class, 'id_karyawan', 'id');
+    }
+
     public function hasRole($roles)
 {
     if (is_array($roles)) {
