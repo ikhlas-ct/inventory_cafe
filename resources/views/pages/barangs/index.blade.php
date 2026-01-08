@@ -18,9 +18,9 @@
                         </div>
                     </form>
 
-                    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createModal">
-                        Add Barang
-                    </button>
+                    <a href="{{ route('barangs.create') }}" class="btn btn-primary mb-3">
+                        Tambah Barang
+                    </a>
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>
@@ -29,6 +29,7 @@
                                     <th>Nama</th>
                                     <th>Kategori</th>
                                     <th>Satuan</th>
+                                    <th>Supplier</th>
                                     <th>Harga</th>
                                     <th>Deskripsi</th>
                                     <th>Stok Sekarang</th>
@@ -39,16 +40,17 @@
                             <tbody>
                                 @foreach ($barangs as $key => $barang)
                                     <tr>
-                                        <td>{{ $barangs->firstItem() + $key }}</td> <!-- Adjust numbering for pagination -->
+                                        <td>{{ $barangs->firstItem() + $key }}</td>
                                         <td>{{ $barang->nama }}</td>
                                         <td>{{ $barang->kategori->nama ?? '-' }}</td>
                                         <td>{{ $barang->satuan->nama ?? '-' }}</td>
+                                        <td>{{ $barang->supplier->nama }}</td>
                                         <td>{{ $barang->harga }}</td>
                                         <td>{{ $barang->deskripsi ?? '-' }}</td>
-                                        <td>{{ $barang->stok }}</td>
+                                        <td>{{ $barang->stok ?? 0 }}</td>
                                         <td>
                                             @if ($barang->foto)
-                                                <img src="{{ asset('storage/' . $barang->foto) }}" alt="Foto Barang" width="50">
+                                <img src="{{ asset('storage/' . $barang->foto) }}" alt="Foto Barang" width="100" class="mt-2">
                                             @else
                                                 -
                                             @endif
@@ -76,71 +78,5 @@
         </div>
     </div>
 
-    <!-- Create Modal -->
-    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createModalLabel">Create Barang</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="{{ route('barangs.store') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="mb-3">
-                            <label for="nama" class="form-label">Nama</label>
-                            <input type="text" class="form-control" id="nama" name="nama" maxlength="255" value="{{ old('nama') }}" required>
-                            @error('nama')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="id_kategori" class="form-label">Kategori</label>
-                            <select class="form-select" id="id_kategori" name="id_kategori" value="{{ old('id_kategori') }}" required>
-                                @foreach ($kategoris as $kategori)
-                                    <option value="{{ $kategori->id }}">{{ $kategori->nama }}</option>
-                                @endforeach
-                            </select>
-                            @error('id_kategori')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="id_satuan" class="form-label">Satuan</label>
-                            <select class="form-select" id="id_satuan" name="id_satuan" value="{{ old('id_satuan') }}" required>
-                                @foreach ($satuans as $satuan)
-                                    <option value="{{ $satuan->id }}">{{ $satuan->nama }}</option>
-                                @endforeach
-                            </select>
-                            @error('id_satuan')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="harga" class="form-label">Harga</label>
-                            <input type="number" step="0.01" class="form-control" id="harga" name="harga" value="{{ old('harga') }}" required min="0">
-                            @error('harga')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="deskripsi" class="form-label">Deskripsi</label>
-                            <textarea class="form-control" id="deskripsi" name="deskripsi" maxlength="1000" required>{{ old('deskripsi') }}</textarea>
-                            @error('deskripsi')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="foto" class="form-label">Foto</label>
-                            <input type="file" class="form-control" id="foto" name="foto" required>
-                            @error('foto')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+
 @endsection

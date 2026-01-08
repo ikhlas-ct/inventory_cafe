@@ -13,13 +13,14 @@ return new class extends Migration
     {
         Schema::create('karyawans', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('id_user');
+            $table->foreign('id_user')->references('id')->on('users');
             $table->string('nama', 35);
             $table->string('telepon',20)->nullable();
             $table->text('alamat')->nullable();
             $table->string('foto')->nullable();
-            $table->unsignedBigInteger('id_user');
-            $table->foreign('id_user')->references('id')->on('users');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

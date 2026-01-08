@@ -78,6 +78,16 @@
                    </a>
                </li>
                <li class="nav-item menu-items">
+                   <a class="nav-link" href="{{ route('manajers.index') }}">
+                       <span class="menu-icon">
+                           <i class="mdi mdi-account-tie"></i>
+                       </span>
+                       <span class="menu-title">Manajer</span>
+                       <i class="menu-arrow"></i>
+                   </a>
+               </li>
+
+               <li class="nav-item menu-items">
                    <a class="nav-link" href="{{ route('karyawans.index') }}">
                        <span class="menu-icon">
                            <i class="mdi mdi-account-group"></i>
@@ -107,15 +117,6 @@
                    </a>
                </li>
                <li class="nav-item menu-items">
-                   <a class="nav-link" href="{{ route('barangs.index') }}">
-                       <span class="menu-icon">
-                           <i class="mdi mdi-package-variant"></i>
-                       </span>
-                       <span class="menu-title">Barang</span>
-                       <i class="menu-arrow"></i>
-                   </a>
-               </li>
-               <li class="nav-item menu-items">
                    <a class="nav-link" href="{{ route('suppliers.index') }}">
                        <span class="menu-icon">
                            <i class="mdi mdi-truck"></i>
@@ -124,7 +125,19 @@
                        <i class="menu-arrow"></i>
                    </a>
                </li>
+               <li class="nav-item menu-items">
+                   <a class="nav-link" href="{{ route('barangs.index') }}">
+                       <span class="menu-icon">
+                           <i class="mdi mdi-package-variant"></i>
+                       </span>
+                       <span class="menu-title">Barang</span>
+                       <i class="menu-arrow"></i>
+                   </a>
+               </li>
            @endcan
+           <li class="nav-item nav-category">
+               <span class="nav-link">Data Operasional</span>
+           </li>
            <li class="nav-item menu-items">
                <a class="nav-link" href="{{ route('barangmasuks.index') }}">
                    <span class="menu-icon">

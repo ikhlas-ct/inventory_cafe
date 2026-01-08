@@ -69,5 +69,7 @@
     <script src="{{ asset('src/assets/js/proBanner.js') }}"></script>
     <script src="{{ asset('src/assets/js/dashboard.js') }}"></script>
     <!-- End custom js for this page -->
+    @yield('scripts')
+
   </body>
 </html>

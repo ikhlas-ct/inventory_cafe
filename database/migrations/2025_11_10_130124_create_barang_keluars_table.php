@@ -13,15 +13,13 @@ return new class extends Migration
     {
         Schema::create('barang_keluars', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('id_barang');
-            $table->foreign('id_barang')->references('id')->on('barangs');
-            $table->integer('jumlah');
+            $table->unsignedBigInteger('id_karyawan');
+            $table->string('nomor_transaksi')->unique();
+            $table->foreign('id_karyawan')->references('id')->on('karyawans');
             $table->date('tanggal_keluar');
             $table->text('catatan')->nullable();
-            $table->unsignedBigInteger('id_karyawan');
-            $table->foreign('id_karyawan')->references('id')->on('karyawans');
-       
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

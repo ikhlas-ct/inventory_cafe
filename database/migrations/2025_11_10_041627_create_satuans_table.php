@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('nama', 50)->unique();
             $table->string('kode_satuan',20)->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

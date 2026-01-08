@@ -3,34 +3,34 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Barangmasuk extends Model
 {
+    use SoftDeletes, HasFactory;
     protected $table = 'barang_masuks';
     protected $primaryKey = 'id';
     public $incrementing = true;
     protected $fillable = [
-        'id_barang', 'jumlah', 'tanggal_masuk', 'catatan', 'harga_beli', 'id_karyawan', 'id_supplier'
+        'id_karyawan','nomor_transaksi', 'tanggal_masuk', 'catatan',
     ];
 
     protected $casts = [
         'tanggal_masuk' => 'date',
-        'harga_beli' => 'decimal:2'
     ];
 
-    public function barang()
-    {
-        return $this->belongsTo(Barang::class, 'id_barang','id');
-    }
+
 
     public function karyawan()
     {
         return $this->belongsTo(Karyawan::class, 'id_karyawan','id');
     }
-
-      public function supplier()
+    public function barangmasukdetail()
     {
-        return $this->belongsTo(Supplier::class, 'id_supplier','id');
+        return $this->hasMany(BarangMasukDetail::class, 'id_barang_masuk');
     }
+
+
 
 }
