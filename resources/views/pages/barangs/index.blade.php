@@ -21,6 +21,8 @@
                     <a href="{{ route('barangs.create') }}" class="btn btn-primary mb-3">
                         Tambah Barang
                     </a>
+                    <a href="{{ route('laporan.stok_barang') }}" class="btn btn-info mb-3" target="_blank">Cetak Laporan Stok Barang</a>
+
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>
@@ -89,7 +91,7 @@
                             </thead>
                             <tbody>
                                 @forelse ($expiringStocks as $key => $item)
-                                    <tr @if ($item['sisa_hari'] < 0) class="bg-primary text-white" @elseif ($item['sisa_hari'] < 5) class="bg-warning text-dark" @endif>
+                                    <tr @if ($item['sisa_hari'] < 0)   @elseif ($item['sisa_hari'] < 5) class="text-white" @endif>
                                         <td>{{ $key + 1 }}</td>
                                         <td>{{ $item['barang']->nama }}</td>
                                         <td>{{ $item['kadaluarsa']->format('d-m-Y') }}</td>

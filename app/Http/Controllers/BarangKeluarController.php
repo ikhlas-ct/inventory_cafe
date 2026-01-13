@@ -2,21 +2,52 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Barang;
+use App\Models\Manajer;
 use App\Models\Barangkeluar;
-use App\Models\BarangKeluarDetail;
-use App\Models\BarangMasukDetail;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
+use App\Models\BarangMasukDetail;
+use App\Models\BarangKeluarDetail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class BarangKeluarController extends Controller
 {
-    public function index()
+
+    public function index(Request $request)
     {
-        $barangkeluars = Barangkeluar::with('user')->latest()->paginate(10);
-        return view('pages.barangkeluars.index', compact('barangkeluars'));
+        $search = $request->query('search');
+        $start = $request->query('start');
+        $end = $request->query('end');
+
+        $query = Barangkeluar::with(['user.karyawan', 'user.manajer'])
+            ->withCount(['barangkeluardetail as jenis_count' => function ($q) {
+                $q->select(DB::raw('count(distinct id_barang)'));
+            }]);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('barangkeluardetail.barang', function ($qq) use ($search) {
+                    $qq->where('nama', 'like', "%{$search}%");
+                })->orWhereHas('user', function ($qq) use ($search) {
+                    $qq->whereHas('karyawan', function ($qqq) use ($search) {
+                        $qqq->where('nama', 'like', "%{$search}%");
+                    })->orWhereHas('manajer', function ($qqq) use ($search) {
+                        $qqq->where('nama', 'like', "%{$search}%");
+                    });
+                })->orWhere('catatan', 'like', "%{$search}%");
+            });
+        }
+
+        if ($start && $end) {
+            $query->whereBetween('tanggal_keluar', [$start, $end]);
+        }
+
+        $barangkeluars = $query->paginate(10);
+
+        return view('pages.barangkeluars.index', compact('barangkeluars', 'search'));
     }
 
     public function create()
@@ -217,5 +248,27 @@ class BarangKeluarController extends Controller
                 'details' => "Tidak dapat menambahkan kembali stok untuk barang ID {$id_barang}.",
             ]);
         }
+    }
+
+    public function laporanBarangKeluar(Request $request)
+    {
+        $start_date = Carbon::parse($request->query('start', now()->startOfMonth()))->startOfDay();
+        $end_date = Carbon::parse($request->query('end', now()->endOfMonth()))->endOfDay();
+
+        $barang_keluars = Barangkeluar::with(['barangkeluardetail.barang.satuan'])
+            ->whereBetween('tanggal_keluar', [$start_date, $end_date])
+            ->get();
+
+        $details = collect();
+        foreach ($barang_keluars as $bk) {
+            $details = $details->merge($bk->barangkeluardetail);
+        }
+
+        $total_jumlah = $details->sum('jumlah');
+
+        // Asumsi manajer diambil dari user yang authenticated, atau ambil manajer pertama jika ada multiple
+        $manajer = auth()->user()->manajer ?? Manajer::first();
+
+        return view('pages.barangkeluars.cetak', compact('details', 'total_jumlah', 'manajer', 'start_date', 'end_date'));
     }
 }

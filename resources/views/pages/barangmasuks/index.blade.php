@@ -20,6 +20,37 @@
                         </div>
                     </form>
 
+                    <!-- Date Filter Form -->
+                    <h5>Filter by Tanggal Masuk</h5>
+                    <form action="{{ route('barangmasuks.index') }}" method="GET" class="mb-3">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label>Start Date</label>
+                                <input type="date" name="start" class="form-control" value="{{ request('start') }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label>End Date</label>
+                                <input type="date" name="end" class="form-control" value="{{ request('end') }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label>&nbsp;</label><br>
+                                <button type="submit" class="btn btn-primary">Filter</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Preset Buttons for Index Filter -->
+                    <a href="{{ route('barangmasuks.index', ['start' => now()->format('Y-m-d'), 'end' => now()->format('Y-m-d')]) }}" class="btn btn-info btn-sm mb-3">Hari Ini</a>
+                    <a href="{{ route('barangmasuks.index', ['start' => now()->startOfMonth()->format('Y-m-d'), 'end' => now()->endOfMonth()->format('Y-m-d')]) }}" class="btn btn-info btn-sm mb-3">Bulan Ini</a>
+                    <a href="{{ route('barangmasuks.index', ['start' => now()->startOfYear()->format('Y-m-d'), 'end' => now()->endOfYear()->format('Y-m-d')]) }}" class="btn btn-info btn-sm mb-3">Tahun Ini</a>
+
+                    <!-- Button to Generate Report for Current Filter -->
+                    @if (request('start') && request('end'))
+                        <a href="{{ route('laporan.barang_masuk', ['start' => request('start'), 'end' => request('end')]) }}" class="btn btn-success mb-3" target="_blank">Cetak Laporan untuk Periode Ini</a>
+                    @else
+                        <a href="{{ route('laporan.barang_masuk') }}" class="btn btn-success mb-3" target="_blank">Cetak Laporan (Default Bulan Ini)</a>
+                    @endif
+
                     <a href="{{ route('barangmasuks.create') }}" class="btn btn-primary mb-3">Tambah Barang Masuk</a>
                     <div class="table-responsive">
                         <table class="table-striped table">

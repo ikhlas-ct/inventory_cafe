@@ -158,4 +158,71 @@ class BarangController extends Controller
         $barang->delete();
         return redirect()->route('barangs.index')->with('success', 'Barang deleted successfully.');
     }
+    public function laporanStokBarang(Request $request)
+    {
+        $start_date = Carbon::parse($request->query('start', now()->startOfMonth()))->startOfDay();
+        $end_date = Carbon::parse($request->query('end', now()->endOfMonth()))->endOfDay();
+
+        $barangs = Barang::with(['satuan'])
+            ->withSum(['barangMasuksDetail as stok_sekarang' => function ($q) {
+                $q->where('jumlah_tersisa', '>', 0);
+            }], 'jumlah_tersisa')
+            ->get();
+
+        // Logic untuk expiring stocks
+        $details = BarangMasukDetail::with(['barang', 'barangMasuk'])
+            ->where('jumlah_tersisa', '>', 0)
+            ->get();
+
+        $expiring = [];
+        $now = Carbon::now();
+
+        foreach ($details as $detail) {
+            $kadaluarsa = $detail->tanggal_kadaluarsa;
+            if (!$kadaluarsa) {
+                continue;
+            }
+
+            $masuk = $detail->barangMasuk->tanggal_masuk;
+            $sisa_hari_float = $kadaluarsa->diffInHours($now, false) / 24.0;
+            $sisa_hari = round($sisa_hari_float);
+            if ($sisa_hari == 0) {
+                $sisa_hari = ($sisa_hari_float > 0) ? 1 : -1;
+            }
+            $total_hari = $kadaluarsa->diffInHours($masuk, true) / 24.0;
+
+            if ($total_hari <= 0) {
+                continue;
+            }
+
+            $persen_sisa = ($sisa_hari_float / $total_hari) * 100;
+
+            // Aturan seleksi
+            if ($sisa_hari > 90) {
+                continue;
+            }
+            if ($persen_sisa > 50 && $sisa_hari >= 5) {
+                continue;
+            }
+            // Else: ambil (termasuk persen >50 tapi sisa <5, persen <=50, atau sisa <0)
+
+            $key = $detail->id_barang . '_' . $kadaluarsa->format('Y-m-d');
+            if (!array_key_exists($key, $expiring)) {
+                $expiring[$key] = [
+                    'barang' => $detail->barang,
+                    'kadaluarsa' => $kadaluarsa,
+                    'sisa_hari' => $sisa_hari,
+                    'stok' => 0,
+                ];
+            }
+            $expiring[$key]['stok'] += $detail->jumlah_tersisa;
+        }
+
+        $expiringStocks = collect($expiring)->sortBy('sisa_hari')->values();
+
+        // Asumsi manajer diambil dari user yang authenticated, atau ambil manajer pertama jika ada multiple
+        $manajer = auth()->user()->manajer ?? Manajer::first();
+
+        return view('pages.barangs.cetak', compact('barangs', 'expiringStocks', 'manajer', 'start_date', 'end_date'));
+    }
 }

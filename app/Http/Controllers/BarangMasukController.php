@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Barang;
+use App\Models\Manajer;
 use App\Models\Karyawan;
 use App\Models\Supplier;
 use App\Models\Barangmasuk;
@@ -15,8 +17,41 @@ use Illuminate\Validation\ValidationException;
 
 class BarangMasukController extends Controller
 {
-  
+    public function index(Request $request)
+    {
+        $search = $request->query('search');
+        $start = $request->query('start');
+        $end = $request->query('end');
 
+        $query = Barangmasuk::with(['user.karyawan', 'user.manajer'])
+            ->withCount(['barangmasukdetail as jenis_count' => function ($q) {
+                $q->select(DB::raw('count(distinct id_barang)'));
+            }]);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('barangmasukdetail.barang', function ($qq) use ($search) {
+                    $qq->where('nama', 'like', "%{$search}%");
+                })->orWhereHas('barangmasukdetail.barang.supplier', function ($qq) use ($search) {
+                    $qq->where('nama', 'like', "%{$search}%");
+                })->orWhereHas('user', function ($qq) use ($search) {
+                    $qq->whereHas('karyawan', function ($qqq) use ($search) {
+                        $qqq->where('nama', 'like', "%{$search}%");
+                    })->orWhereHas('manajer', function ($qqq) use ($search) {
+                        $qqq->where('nama', 'like', "%{$search}%");
+                    });
+                })->orWhere('catatan', 'like', "%{$search}%");
+            });
+        }
+
+        if ($start && $end) {
+            $query->whereBetween('tanggal_masuk', [$start, $end]);
+        }
+
+        $barangmasuks = $query->paginate(10);
+
+        return view('pages.barangmasuks.index', compact('barangmasuks', 'search'));
+    }
 
     public function create()
     {
@@ -237,5 +272,31 @@ class BarangMasukController extends Controller
     {
         $barangmasuk->load('barangmasukdetail.barang');
         return view('pages.barangmasuks.detail', compact('barangmasuk'));
+    }
+
+
+    public function laporanBarangMasuk(Request $request)
+    {
+        $start_date = Carbon::parse($request->query('start', now()->startOfMonth()))->startOfDay();
+        $end_date = Carbon::parse($request->query('end', now()->endOfMonth()))->endOfDay();
+
+        $barang_masuks = Barangmasuk::with(['barangmasukdetail.barang.kategori', 'barangmasukdetail.barang.satuan', 'barangmasukdetail.barang.supplier'])
+            ->whereBetween('tanggal_masuk', [$start_date, $end_date])
+            ->get();
+
+        $details = collect();
+        foreach ($barang_masuks as $bm) {
+            $details = $details->merge($bm->barangmasukdetail);
+        }
+
+        $total_jumlah = $details->sum('jumlah');
+        $total_harga = $details->sum(function ($detail) {
+            return $detail->jumlah * $detail->barang->harga;
+        });
+
+        // Asumsi manajer diambil dari user yang authenticated, atau ambil manajer pertama jika ada multiple
+        $manajer = auth()->user()->manajer ?? Manajer::first();
+
+        return view('pages.barangmasuks.cetak', compact('details', 'total_jumlah', 'total_harga', 'manajer', 'start_date', 'end_date'));
     }
 }
