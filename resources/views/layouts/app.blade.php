@@ -22,7 +22,7 @@
     <!-- Layout styles -->
     <link rel="stylesheet" href="{{ asset('src/assets/css/style.css') }}">
     <!-- End layout styles -->
-    <link rel="shortcut icon" href="{{ asset('src/assets/images/favicon.png') }}" />
+    <link rel="shortcut icon" href="{{ asset('default/home.jpg') }}" />
 
   </head>
   <body>
