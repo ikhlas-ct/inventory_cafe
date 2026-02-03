@@ -40,20 +40,22 @@
                 padding-bottom: 20px;
                 border-bottom: 3px solid #ff9800;
             }
-.logo {
-    width: 80px;
-    height: 80px;
-    margin-right: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
-.logo img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; /* logo tidak gepeng */
-}
+            .logo {
+                width: 160;
+                height: 160px;
+                margin-right: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .logo img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                /* logo tidak gepeng */
+            }
 
             .company-info {
                 flex: 1;
@@ -232,7 +234,7 @@
                     page-break-after: auto;
                 }
 
-thead {
+                thead {
                     display: table-header-group;
                 }
 
@@ -328,7 +330,7 @@ thead {
             <!-- Tanda Tangan hanya Manajer -->
             <div class="signature-section">
                 <div class="signature-box">
-                                        <p>Padang, <span id="signature-date"></span></p>
+                    <p>Padang, <span id="signature-date"></span></p>
 
                     <p>Mengetahui,</p>
                     <p>Manajer Cafe Hom Padang</p>

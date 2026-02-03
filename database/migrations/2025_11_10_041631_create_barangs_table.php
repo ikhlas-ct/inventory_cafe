@@ -22,7 +22,6 @@ return new class extends Migration
             $table->string('kode_barang', 20)->unique();
             $table->string('nama', 35);
             $table->string('foto')->nullable();
-            $table->decimal('harga', 20, 2)->default(0);
             $table->text('deskripsi')->nullable();
             $table->timestamps();
             $table->softDeletes();

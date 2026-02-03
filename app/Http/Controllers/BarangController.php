@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\Barang;
 use App\Models\Satuan;
+use App\Models\Manajer;
 use App\Models\Kategori;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
@@ -102,7 +103,6 @@ class BarangController extends Controller
             'barangs.*.nama' => 'required|max:255',
             'barangs.*.id_kategori' => 'required|exists:kategoris,id',
             'barangs.*.id_satuan' => 'required|exists:satuans,id',
-            'barangs.*.harga' => 'required|numeric|min:0',
             'barangs.*.deskripsi' => 'nullable|max:1000',
             'barangs.*.foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);

@@ -20,13 +20,9 @@ class Barang extends Model
         'kode_barang',
         'nama',
         'foto',
-        'harga',
         'deskripsi'
     ];
 
-    protected $casts = [
-        'harga' => 'decimal:2'
-    ];
 
     protected $appends = ['stok_sekarang'];
 
