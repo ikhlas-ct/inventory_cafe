@@ -45,13 +45,7 @@
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="mb-3">
-                            <label for="harga" class="form-label">Harga</label>
-                            <input type="number" step="0.01" class="form-control" id="harga" name="harga" value="{{ $barang->harga }}" required min="0">
-                            @error('harga')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
+                   
                         <div class="mb-3">
                             <label for="deskripsi" class="form-label">Deskripsi</label>
                             <textarea class="form-control" id="deskripsi" name="deskripsi" maxlength="1000">{{ $barang->deskripsi }}</textarea>

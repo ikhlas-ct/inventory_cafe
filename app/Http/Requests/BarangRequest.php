@@ -21,13 +21,12 @@ class BarangRequest extends FormRequest
      */
     public function rules(): array
     {
-       return [
-        'nama' => 'required|string|max:255',
-        'id_kategori' => 'required|integer|exists:kategoris,id',
-        'foto' => 'required|file|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        'id_satuan' => 'required|integer|exists:satuans,id',
-        'deskripsi' => 'required|string|max:1000',
-    ];
-
+        return [
+            'nama' => 'required|string|max:100',
+            'id_kategori' => 'required|integer|exists:kategoris,id',
+            'foto' => 'nullable|file|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'id_satuan' => 'required|integer|exists:satuans,id',
+            'deskripsi' => 'required|string|max:1000',
+        ];
     }
 }

@@ -12,6 +12,8 @@ use App\Models\BarangKeluarDetail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use App\Models\User;
+use App\Notifications\BarangKeluarNotification;
 
 class BarangKeluarController extends Controller
 {
@@ -66,7 +68,7 @@ class BarangKeluarController extends Controller
             'details.*.jumlah' => 'required|integer|min:1',
         ]);
 
-        DB::transaction(function () use ($validated) {
+        $barangKeluar = DB::transaction(function () use ($validated) {
             $today = now()->format('Ymd');
             $count = Barangkeluar::withTrashed()
                 ->whereDate('created_at', now()->toDateString())
@@ -101,7 +103,17 @@ class BarangKeluarController extends Controller
 
                 $this->deductFromMasuk($id_barang, $totalJumlah);
             }
+
+            return $barangKeluar;
         });
+
+        if (Auth::user()->role === 'karyawan') {
+            $managers = User::where('role', 'manajer')->get();
+
+            foreach ($managers as $manager) {
+                $manager->notify(new BarangKeluarNotification($barangKeluar, 'store'));
+            }
+        }
 
         return redirect()->route('barangkeluars.index')->with('success', 'Barang keluar berhasil ditambahkan.');
     }
@@ -187,6 +199,14 @@ class BarangKeluarController extends Controller
             }
         });
 
+        if (Auth::user()->role === 'karyawan') {
+            $managers = User::where('role', 'manajer')->get();
+
+            foreach ($managers as $manager) {
+                $manager->notify(new BarangKeluarNotification($barangkeluar, 'update'));
+            }
+        }
+
         return redirect()->route('barangkeluars.index')->with('success', 'Barang keluar berhasil diupdate.');
     }
 
@@ -208,7 +228,7 @@ class BarangKeluarController extends Controller
         $remaining = $jumlah;
         $masukDetails = BarangMasukDetail::where('id_barang', $id_barang)
             ->where('jumlah_tersisa', '>', 0)
-            ->orderByRaw('tanggal_kadaluarsa IS NULL DESC, tanggal_kadaluarsa DESC')
+            ->orderBy('created_at', 'asc')
             ->get();
 
         foreach ($masukDetails as $masukDetail) {
@@ -231,7 +251,7 @@ class BarangKeluarController extends Controller
         $remaining = $jumlah;
         $masukDetails = BarangMasukDetail::where('id_barang', $id_barang)
             ->whereRaw('jumlah_tersisa < jumlah')
-            ->orderByRaw('tanggal_kadaluarsa IS NULL DESC, tanggal_kadaluarsa DESC')
+            ->orderBy('created_at', 'asc')
             ->get();
 
         foreach ($masukDetails as $masukDetail) {

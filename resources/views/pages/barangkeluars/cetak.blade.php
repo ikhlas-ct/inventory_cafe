@@ -277,15 +277,25 @@
             <!-- Judul Laporan -->
             <div class="report-title">
                 <h1>LAPORAN BARANG KELUAR</h1>
-                <div class="subtitle">Periode: {{ $start_date->format('d F Y') }} - {{ $end_date->format('d F Y') }}
-                </div>
+             <div class="subtitle">
+    Periode:
+    {{ $start_date ? $start_date->format('d F Y') : '-' }}
+    -
+    {{ $end_date ? $end_date->format('d F Y') : '-' }}
+</div>
+
             </div>
 
             <!-- Informasi Transaksi -->
             <div class="transaction-info">
                 <div class="info-column">
-                    <p><span class="info-label">Periode:</span> {{ $start_date->format('d F Y') }} -
-                        {{ $end_date->format('d F Y') }}</p>
+                   <p>
+    <span class="info-label">Periode:</span>
+    {{ $start_date ? $start_date->format('d F Y') : '-' }}
+    -
+    {{ $end_date ? $end_date->format('d F Y') : '-' }}
+</p>
+
                 </div>
                 <div class="info-column">
                     <p><span class="info-label">Dicetak pada:</span> <span id="print-date"></span></p>
@@ -305,23 +315,28 @@
                             <th>Jumlah</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @foreach ($details as $index => $detail)
-                            <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ $detail->barangKeluar->nomor_transaksi }}</td>
-                                <td>{{ $detail->barang->kode_barang }}</td>
-                                <td>{{ $detail->barang->nama }}</td>
-                                <td>{{ $detail->barang->satuan->nama }}</td>
-                                <td>{{ $detail->jumlah }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
+               <tbody>
+    @forelse ($details as $index => $detail)
+        <tr>
+            <td>{{ $index + 1 }}</td>
+            <td>{{ $detail->barangKeluar->nomor_transaksi ?? '-' }}</td>
+            <td>{{ $detail->barang->kode_barang ?? '-' }}</td>
+            <td>{{ $detail->barang->nama ?? '-' }}</td>
+            <td>{{ $detail->barang->satuan->nama ?? '-' }}</td>
+            <td>{{ $detail->jumlah ?? '-' }}</td>
+        </tr>
+    @empty
+        <tr>
+            <td colspan="6" style="text-align:center;">-</td>
+        </tr>
+    @endforelse
+</tbody>
+
                     <tfoot>
                         <tr style="background-color: #fff3e0; font-weight: 600;">
                             <td colspan="4" style="text-align: right; color: #ff9800;">TOTAL</td>
                             <td></td>
-                            <td>{{ $total_jumlah }}</td>
+                            <td>{{ $total_jumlah ?? '-' }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -335,7 +350,7 @@
                     <p>Mengetahui,</p>
                     <p>Manajer Cafe Hom Padang</p>
                     <div class="signature-line"></div>
-                    <p><strong>{{ $manajer->nama }}</strong></p>
+                    <p><strong>{{ $manajer->nama ?? '-' }}</strong></p>
                 </div>
             </div>
 

@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
-use App\Models\Barang;
-use App\Models\Manajer;
-use App\Models\Karyawan;
-use App\Models\Supplier;
-use App\Models\Barangmasuk;
-use Illuminate\Http\Request;
-use App\Models\BarangMasukDetail;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\BarangMasukRequest;
+use App\Models\Barang;
+use App\Models\Barangmasuk;
+use App\Models\BarangMasukDetail;
+use App\Models\Karyawan;
+use App\Models\Manajer;
+use App\Models\Supplier;
+use App\Models\User;
+use App\Notifications\BarangMasukNotification;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BarangMasukController extends Controller
@@ -70,10 +72,10 @@ class BarangMasukController extends Controller
             'details' => 'required|array|min:1',
             'details.*.id_barang' => 'required|exists:barangs,id',
             'details.*.jumlah' => 'required|integer|min:1',
-            'details.*.tanggal_kadaluarsa' => 'nullable|date',
+            'details.*.tanggal_kadaluarsa' => 'nullable|date|after_or_equal:today',
         ]);
 
-        DB::transaction(function () use ($validated, $request) {
+        $barangMasuk = DB::transaction(function () use ($validated, $request) {
             $today = now()->format('Ymd');
             // Gunakan withTrashed() untuk count termasuk soft-deleted records
             $count = Barangmasuk::withTrashed()
@@ -106,7 +108,17 @@ class BarangMasukController extends Controller
                     'tanggal_kadaluarsa' => $first['tanggal_kadaluarsa'] ?? null,
                 ]);
             }
+
+            return $barangMasuk;  // Kembalikan instance ini
         });
+
+        if (Auth::user()->role === 'karyawan') {
+            $managers = User::where('role', 'manajer')->get();
+
+            foreach ($managers as $manager) {
+                $manager->notify(new BarangMasukNotification($barangMasuk, 'store'));
+            }
+        }
 
         return redirect()->route('barangmasuks.index')->with('success', 'Barang masuk berhasil ditambahkan.');
     }
@@ -126,7 +138,7 @@ class BarangMasukController extends Controller
             'details.*.id' => 'sometimes|exists:barang_masuk_details,id',
             'details.*.id_barang' => 'required|exists:barangs,id',
             'details.*.jumlah' => 'required|integer|min:1',
-            'details.*.tanggal_kadaluarsa' => 'nullable|date',
+            'details.*.tanggal_kadaluarsa' => 'nullable|date|after_or_equal:today',
         ]);
 
         DB::transaction(function () use ($validated, $request, $barangmasuk) {
@@ -241,6 +253,14 @@ class BarangMasukController extends Controller
                 }
             }
         });
+        if (Auth::user()->role === 'karyawan') {
+            $managers = User::where('role', 'manajer')->get();
+
+            foreach ($managers as $manager) {
+                $manager->notify(new BarangMasukNotification($barangmasuk, 'update'));
+            }
+        }
+
 
         return redirect()->route('barangmasuks.index')->with('success', 'Barang masuk berhasil diupdate.');
     }

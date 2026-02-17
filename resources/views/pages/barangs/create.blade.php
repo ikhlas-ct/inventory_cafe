@@ -34,7 +34,6 @@
                                         <th>Nama</th>
                                         <th>Kategori</th>
                                         <th>Satuan</th>
-                                        <th>Harga</th>
                                         <th>Deskripsi</th>
                                         <th>Foto</th>
                                         <th>Action</th>
@@ -74,12 +73,7 @@
                                                 <div class="text-danger">{{ $message }}</div>
                                             @enderror
                                         </td>
-                                        <td>
-                                            <input type="number" step="0.01" class="form-control" name="barangs[0][harga]" required min="0">
-                                            @error('barangs.0.harga')
-                                                <div class="text-danger">{{ $message }}</div>
-                                            @enderror
-                                        </td>
+                                    
                                         <td>
                                             <textarea class="form-control" name="barangs[0][deskripsi]" maxlength="1000"></textarea>
                                             @error('barangs.0.deskripsi')

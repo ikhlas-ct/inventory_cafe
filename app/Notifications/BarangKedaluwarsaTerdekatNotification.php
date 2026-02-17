@@ -24,11 +24,12 @@ class BarangKedaluwarsaTerdekatNotification extends Notification
     public function toDatabase($notifiable)
     {
         return [
-            'barang_id' => $this->barangId,
-            'nama_barang' => $this->namaBarang,
+            'barang_id'          => $this->barangId,
+            'nama_barang'        => $this->namaBarang,
             'tanggal_kadaluarsa' => $this->tanggalKadaluarsa->format('Y-m-d'),
-            'sisa_hari' => $this->sisaHari,
-            'pesan' => "Barang {$this->namaBarang} akan kedaluwarsa dalam {$this->sisaHari} ."
+            'sisa_hari'          => $this->sisaHari,
+            'pesan'              => "Barang {$this->namaBarang} akan kedaluwarsa dalam {$this->sisaHari} hari.",
+            'url'                => route('barangs.show', $this->barangId),   // ← INI LINK YANG KAMU MINTA
         ];
     }
 }

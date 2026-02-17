@@ -6,16 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('barang_keluars', function (Blueprint $table) {
             $table->id();
+
             $table->unsignedBigInteger('id_user');
+            $table->foreign('id_user')
+                  ->references('id')->on('users')
+                  ->onDelete('cascade');
+
             $table->string('nomor_transaksi')->unique();
-            $table->foreign('id_user')->references('id')->on('users');
             $table->date('tanggal_keluar');
             $table->text('catatan')->nullable();
             $table->timestamps();
@@ -23,9 +24,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('barang_keluars');

@@ -6,8 +6,8 @@
 
     <nav class="navbar fixed-top d-flex flex-row p-0">
         <div class="navbar-brand-wrapper d-flex d-lg-none align-items-center justify-content-center">
-            <a class="navbar-brand brand-logo-mini" href="index.html"><img
-                    src="{{ asset('default/home.jpg') }}" alt="logo" /></a>
+            <a class="navbar-brand brand-logo-mini" href="index.html"><img src="{{ asset('default/home.jpg') }}"
+                    alt="logo" /></a>
         </div>
         <div class="navbar-menu-wrapper d-flex align-items-stretch flex-grow">
             <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
@@ -43,27 +43,98 @@
                             <a href="{{ route('notifikasi.index') }}" class="dropdown-item preview-item">
                                 <div class="preview-thumbnail">
                                     <div class="preview-icon bg-dark rounded-circle">
+                                        <!-- Icon bisa dibedakan per jenis nanti, tapi sekarang tetap sama -->
                                         <i class="mdi mdi-alert-circle text-warning"></i>
                                     </div>
                                 </div>
 
                                 <div class="preview-item-content">
-                                    <p class="preview-subject mb-1">
-                                        {{ $notif->data['nama_barang'] ?? 'Notifikasi' }}
-                                    </p>
-                                    <p class="text-muted ellipsis mb-0">
-                                        {{ $notif->data['pesan'] ?? '-' }}
-                                    </p>
+                                    <!-- Judul (nama_barang atau message atau fallback) -->
+                                    @if (isset($notif->data['nama_barang']))
+                                        <p class="preview-subject mb-1">
+                                            {{ $notif->data['nama_barang'] }}
+                                        </p>
+                                    @elseif (isset($notif->data['message']))
+                                        <p class="preview-subject mb-1">
+                                            {{ $notif->data['message'] }}
+                                        </p>
+                                    @else
+                                        <p class="preview-subject mb-1">
+                                            Notifikasi Sistem
+                                        </p>
+                                    @endif
+
+                                    <!-- Pesan utama dengan link jika ada barang_masuk_id atau karyawan_id atau url -->
+                                    @if (isset($notif->data['pesan']))
+                                        @php
+                                            $pesan = $notif->data['pesan'];
+                                            // Ekstrak dan bulatkan angka desimal dari pesan (misal: "dalam 6.375750306956 hari")
+                                            if (preg_match('/dalam (\d+\.\d+) hari/', $pesan, $matches)) {
+                                                $days = (float) $matches[1];
+                                                $rounded = round($days); // Bulatkan: >=0.5 ke atas, <0.5 ke bawah
+                                                // Ganti angka asli dengan yang dibulatkan (sebagai integer)
+                                                $pesan = str_replace($matches[1], (int) $rounded, $pesan);
+                                            }
+                                        @endphp
+                                        <p class="text-muted ellipsis mb-0">
+                                            {{ $pesan }}
+                                        </p>
+                                    @elseif (isset($notif->data['message']))
+                                        <p class="text-muted ellipsis mb-0">
+                                            @if (isset($notif->data['url']))
+                                                <a href="{{ $notif->data['url'] }}"
+                                                    class="text-muted text-decoration-underline">
+                                                    {{ $notif->data['message'] }}
+                                                </a>
+                                            @elseif (isset($notif->data['id_barang_masuk']))
+                                                <a href="{{ route('barangmasuks.show', $notif->data['id_barang_masuk']) }}"
+                                                    class="text-muted text-decoration-underline">
+                                                    {{ $notif->data['message'] }}
+                                                </a>
+                                            @elseif (isset($notif->data['karyawan_id']))
+                                                <a href="{{ route('karyawans.show', $notif->data['karyawan_id']) }}"
+                                                    class="text-muted text-decoration-underline">
+                                                    {{ $notif->data['message'] }}
+                                                </a>
+                                            @else
+                                                {{ $notif->data['message'] }}
+                                            @endif
+                                        </p>
+                                    @else
+                                        <p class="text-muted ellipsis fst-italic mb-0">
+                                            Tidak ada deskripsi
+                                        </p>
+                                    @endif
+
+                                    <!-- Tambahan: Dibuat oleh dan Nomor Transaksi (khusus untuk notif Barang Masuk) -->
+                                    @if (isset($notif->data['nomor_transaksi']) || isset($notif->data['id_barang_masuk']))
+                                        <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+                                            Nomor Transaksi: {{ $notif->data['nomor_transaksi'] ?? 'N/A' }}
+                                        </small>
+                                        <small class="text-muted d-block" style="font-size: 0.75rem;">
+                                            Dibuat oleh: {{ $notif->data['created_by'] ?? 'User' }}
+                                        </small>
+                                    @endif
+
+                                    <!-- Waktu -->
                                     <small class="text-muted">
                                         {{ $notif->created_at->diffForHumans() }}
                                     </small>
+
+                                    <!-- Opsional: tambah info kadaluarsa kalau ada (tapi tetap ringkas di dropdown) -->
+                                    @if (isset($notif->data['expired_at']))
+                                        <small class="text-warning d-block mt-1" style="font-size: 0.75rem;">
+                                            Kadaluarsa:
+                                            {{ \Carbon\Carbon::parse($notif->data['expired_at'])->format('d M Y') }}
+                                        </small>
+                                    @endif
                                 </div>
                             </a>
                             <div class="dropdown-divider"></div>
                         @empty
-                            <p class="text-muted mb-0 p-3 text-center">
-                                Tidak ada notifikasi
-                            </p>
+                            <div class="dropdown-item text-muted py-3 text-center">
+                                Tidak ada notifikasi baru
+                            </div>
                         @endforelse
 
                         <p class="mb-0 p-3 text-center">

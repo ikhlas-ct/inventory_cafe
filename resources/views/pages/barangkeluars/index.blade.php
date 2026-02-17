@@ -65,33 +65,57 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @foreach ($barangkeluars as $key => $barangkeluar)
-                                    <tr>
-                                        <td>{{ $barangkeluars->firstItem() + $key }}</td>
-                                        <td>{{ $barangkeluar->user->karyawan->nama ?? ($barangkeluar->user->manajer->nama ?? '-') }}
-                                        </td>
-                                        <td>{{ $barangkeluar->nomor_transaksi ?? '-' }}</td>
-                                        <td>{{ $barangkeluar->tanggal_keluar->format('Y-m-d') }}</td>
-                                        <td>{{ $barangkeluar->jenis_count }}</td>
-                                        <td>{{ $barangkeluar->catatan ?? '-' }}</td>
-                                        <td>
-                                            <a href="{{ route('barangkeluars.show', $barangkeluar->id) }}"
-                                                class="btn btn-primary btn-sm">Detail</a>
+                           <tbody>
+    @forelse ($barangkeluars as $key => $barangkeluar)
+        <tr>
+            <td>{{ $barangkeluars->firstItem() + $key }}</td>
 
-                                            <a href="{{ route('barangkeluars.edit', $barangkeluar->id) }}"
-                                                class="btn btn-warning btn-sm">Edit</a>
-                                            <form action="{{ route('barangkeluars.destroy', $barangkeluar->id) }}"
-                                                method="POST" style="display: inline;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-sm"
-                                                    onclick="return confirm('Are you sure?')">Delete</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
+            <td>
+                {{
+                    $barangkeluar->user->karyawan->nama
+                    ?? $barangkeluar->user->manajer->nama
+                    ?? '-'
+                }}
+            </td>
+
+            <td>{{ $barangkeluar->nomor_transaksi ?? '-' }}</td>
+
+            <td>
+                {{ $barangkeluar->tanggal_keluar
+                    ? $barangkeluar->tanggal_keluar->format('Y-m-d')
+                    : '-'
+                }}
+            </td>
+
+            <td>{{ $barangkeluar->jenis_count ?? '-' }}</td>
+
+            <td>{{ $barangkeluar->catatan ?? '-' }}</td>
+
+            <td>
+                <a href="{{ route('barangkeluars.show', $barangkeluar->id) }}"
+                    class="btn btn-primary btn-sm">Detail</a>
+
+                <a href="{{ route('barangkeluars.edit', $barangkeluar->id) }}"
+                    class="btn btn-warning btn-sm">Edit</a>
+
+                <form action="{{ route('barangkeluars.destroy', $barangkeluar->id) }}"
+                    method="POST" style="display:inline;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger btn-sm"
+                        onclick="return confirm('Are you sure?')">
+                        Delete
+                    </button>
+                </form>
+            </td>
+        </tr>
+    @empty
+        <tr>
+            <td colspan="7" class="text-center">-</td>
+        </tr>
+    @endforelse
+</tbody>
+
                         </table>
                     </div>
 

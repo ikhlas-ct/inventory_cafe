@@ -65,33 +65,57 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @foreach ($barangmasuks as $key => $barangmasuk)
-                                    <tr>
-                                        <td>{{ $barangmasuks->firstItem() + $key }}</td>
-                                        <td>{{ $barangmasuk->user->karyawan->nama ?? ($barangmasuk->user->manajer->nama ?? '-') }}
-                                        </td>
-                                        <td>{{ $barangmasuk->nomor_transaksi ?? '-' }}</td>
-                                        <td>{{ $barangmasuk->tanggal_masuk->format('Y-m-d') }}</td>
-                                        <td>{{ $barangmasuk->jenis_count }}</td>
-                                        <td>{{ $barangmasuk->catatan ?? '-' }}</td>
-                                        <td>
-                                            <a href="{{ route('barangmasuks.show', $barangmasuk->id) }}"
-                                                class="btn btn-primary btn-sm">Detail</a>
+                        <tbody>
+                            @forelse ($barangmasuks as $key => $barangmasuk)
+                                <tr>
+                                    <td>{{ $barangmasuks->firstItem() + $key }}</td>
 
-                                            <a href="{{ route('barangmasuks.edit', $barangmasuk->id) }}"
-                                                class="btn btn-warning btn-sm">Edit</a>
-                                            <form action="{{ route('barangmasuks.destroy', $barangmasuk->id) }}"
-                                                method="POST" style="display: inline;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-sm"
-                                                    onclick="return confirm('Are you sure?')">Delete</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
+                                    <td>
+                                        {{
+                                            $barangmasuk->user->karyawan->nama
+                                            ?? $barangmasuk->user->manajer->nama
+                                            ?? '-'
+                                        }}
+                                    </td>
+
+                                    <td>{{ $barangmasuk->nomor_transaksi ?? '-' }}</td>
+
+                                    <td>
+                                        {{ $barangmasuk->tanggal_masuk
+                                            ? $barangmasuk->tanggal_masuk->format('Y-m-d')
+                                            : '-'
+                                        }}
+                                    </td>
+
+                                    <td>{{ $barangmasuk->jenis_count ?? '-' }}</td>
+
+                                    <td>{{ $barangmasuk->catatan ?? '-' }}</td>
+
+                                    <td>
+                                        <a href="{{ route('barangmasuks.show', $barangmasuk->id) }}"
+                                            class="btn btn-primary btn-sm">Detail</a>
+
+                                        <a href="{{ route('barangmasuks.edit', $barangmasuk->id) }}"
+                                            class="btn btn-warning btn-sm">Edit</a>
+
+                                        <form action="{{ route('barangmasuks.destroy', $barangmasuk->id) }}"
+                                            method="POST" style="display:inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm"
+                                                onclick="return confirm('Are you sure?')">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="text-center">-</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+
                         </table>
                     </div>
 

@@ -6,19 +6,26 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('barangs', function (Blueprint $table) {
             $table->id();
+
             $table->unsignedBigInteger('id_supplier');
-            $table->foreign('id_supplier')->references('id')->on('suppliers');
+            $table->foreign('id_supplier')
+                  ->references('id')->on('suppliers')
+                  ->onDelete('cascade');
+
             $table->unsignedBigInteger('id_kategori');
-            $table->foreign('id_kategori')->references('id')->on('kategoris');
+            $table->foreign('id_kategori')
+                  ->references('id')->on('kategoris')
+                  ->onDelete('cascade');
+
             $table->unsignedBigInteger('id_satuan');
-            $table->foreign('id_satuan')->references('id')->on('satuans');
+            $table->foreign('id_satuan')
+                  ->references('id')->on('satuans')
+                  ->onDelete('cascade');
+
             $table->string('kode_barang', 20)->unique();
             $table->string('nama', 35);
             $table->string('foto')->nullable();
@@ -28,9 +35,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('barangs');

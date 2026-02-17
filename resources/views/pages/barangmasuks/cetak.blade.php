@@ -277,15 +277,18 @@
             <!-- Judul Laporan -->
             <div class="report-title">
                 <h1>LAPORAN BARANG MASUK</h1>
-                <div class="subtitle">Periode: {{ $start_date->format('d F Y') }} - {{ $end_date->format('d F Y') }}
+                <div class="subtitle">
+                    Periode: {{ $start_date?->format('d F Y') ?? '-' }} - {{ $end_date?->format('d F Y') ?? '-' }}
                 </div>
             </div>
 
             <!-- Informasi Transaksi -->
             <div class="transaction-info">
                 <div class="info-column">
-                    <p><span class="info-label">Periode:</span> {{ $start_date->format('d F Y') }} -
-                        {{ $end_date->format('d F Y') }}</p>
+                    <p><span class="info-label">Periode:</span>
+                        {{ $start_date?->format('d F Y') ?? '-' }} -
+                        {{ $end_date?->format('d F Y') ?? '-' }}
+                    </p>
                 </div>
                 <div class="info-column">
                     <p><span class="info-label">Dicetak pada:</span> <span id="print-date"></span></p>
@@ -307,24 +310,28 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($details as $index => $detail)
+                        @forelse ($details as $index => $detail)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td>{{ $detail->barangMasuk->nomor_transaksi }}</td>
-                                <td>{{ $detail->barang->kode_barang }}</td>
-                                <td>{{ $detail->barang->nama }}</td>
-                                <td>{{ $detail->barang->satuan->nama }}</td>
-                                <td>{{ $detail->jumlah }}</td>
-                                <td>{{ $detail->tanggal_kadaluarsa ? $detail->tanggal_kadaluarsa->format('d F Y') : '-' }}
+                                <td>{{ $detail->barangMasuk->nomor_transaksi ?? '-' }}</td>
+                                <td>{{ $detail->barang->kode_barang ?? '-' }}</td>
+                                <td>{{ $detail->barang->nama ?? '-' }}</td>
+                                <td>{{ $detail->barang->satuan->nama ?? '-' }}</td>
+                                <td>{{ $detail->jumlah ?? '-' }}</td>
+                                <td>{{ $detail->tanggal_kadaluarsa?->format('d F Y') ?? '-' }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 20px; color: #888;">
+                                    Tidak ada data barang masuk pada periode ini
                                 </td>
                             </tr>
-                        @endforeach
+                        @endforelse
                     </tbody>
                     <tfoot>
                         <tr style="background-color: #fff3e0; font-weight: 600;">
-                            <td colspan="4" style="text-align: right; color: #ff9800;">TOTAL</td>
-                            <td></td>
-                            <td>{{ $total_jumlah }}</td>
+                            <td colspan="5" style="text-align: right; color: #ff9800;">TOTAL</td>
+                            <td>{{ $total_jumlah ?? '-' }}</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -339,7 +346,7 @@
                     <p>Mengetahui,</p>
                     <p>Manajer Cafe Hom Padang</p>
                     <div class="signature-line"></div>
-                    <p><strong>{{ $manajer->nama }}</strong></p>
+                    <p><strong>{{ $manajer->nama ?? '-' }}</strong></p>
                 </div>
             </div>
 
@@ -358,21 +365,14 @@
             // Menambahkan tanggal hari ini secara otomatis
             document.addEventListener('DOMContentLoaded', function() {
                 const now = new Date();
-                const printOptions = {
+                const options = {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric',
-
                 };
-                const signatureOptions = {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                };
-                const formattedPrintDate = now.toLocaleDateString('id-ID', printOptions);
-                const formattedSignatureDate = now.toLocaleDateString('id-ID', signatureOptions);
-                document.getElementById('print-date').textContent = formattedPrintDate;
-                document.getElementById('signature-date').textContent = formattedSignatureDate;
+                const formattedDate = now.toLocaleDateString('id-ID', options);
+                document.getElementById('print-date').textContent = formattedDate;
+                document.getElementById('signature-date').textContent = formattedDate;
             });
         </script>
     </body>

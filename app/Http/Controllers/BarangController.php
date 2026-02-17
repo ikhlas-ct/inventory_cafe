@@ -33,7 +33,6 @@ class BarangController extends Controller
 
         $barangs = $query->paginate(10);
 
-        // Query untuk stok mendekati kadaluarsa
         $details = BarangMasukDetail::with(['barang', 'barangMasuk'])
             ->where('jumlah_tersisa', '>', 0)
             ->get();
@@ -49,10 +48,14 @@ class BarangController extends Controller
 
             $masuk = $detail->barangMasuk->tanggal_masuk;
             $sisa_hari_float = $kadaluarsa->diffInHours($now, false) / 24.0;
-            $sisa_hari = round($sisa_hari_float);
-            if ($sisa_hari == 0) {
-                $sisa_hari = ($sisa_hari_float > 0) ? 1 : -1;
+
+
+            if ($sisa_hari_float > 0) {
+                $sisa_hari = ceil($sisa_hari_float);
+            } else {
+                $sisa_hari = floor($sisa_hari_float);
             }
+
             $total_hari = $kadaluarsa->diffInHours($masuk, true) / 24.0;
 
             if ($total_hari <= 0) {
@@ -61,14 +64,13 @@ class BarangController extends Controller
 
             $persen_sisa = ($sisa_hari_float / $total_hari) * 100;
 
-            // Aturan seleksi
+            // Aturan seleksi persis seperti asli
             if ($sisa_hari > 90) {
                 continue;
             }
             if ($persen_sisa > 50 && $sisa_hari >= 5) {
                 continue;
             }
-            // Else: ambil (termasuk persen >50 tapi sisa <5, persen <=50, atau sisa <0)
 
             $key = $detail->id_barang . '_' . $kadaluarsa->format('Y-m-d');
             if (!array_key_exists($key, $expiring)) {
@@ -82,7 +84,9 @@ class BarangController extends Controller
             $expiring[$key]['stok'] += $detail->jumlah_tersisa;
         }
 
-        $expiringStocks = collect($expiring)->sortBy('sisa_hari')->values();
+        $expiringStocks = collect($expiring)
+            ->sortByDesc('sisa_hari')
+            ->values();
 
         return view('pages.barangs.index', compact('barangs', 'search', 'kategoris', 'satuans', 'expiringStocks'));
     }
@@ -99,8 +103,8 @@ class BarangController extends Controller
         $validated = $request->validate([
             'id_supplier' => 'required|exists:suppliers,id',
             'barangs' => 'required|array|min:1',
-            'barangs.*.kode_barang' => 'required|unique:barangs,kode_barang|max:255',
-            'barangs.*.nama' => 'required|max:255',
+            'barangs.*.kode_barang' => 'required|unique:barangs,kode_barang|max:100',
+            'barangs.*.nama' => 'required|max:100',
             'barangs.*.id_kategori' => 'required|exists:kategoris,id',
             'barangs.*.id_satuan' => 'required|exists:satuans,id',
             'barangs.*.deskripsi' => 'nullable|max:1000',
@@ -125,6 +129,26 @@ class BarangController extends Controller
         }
 
         return redirect()->route('barangs.index')->with('success', 'Barang berhasil ditambahkan.');
+    }
+
+    public function show(Barang $barang)
+    {
+        $details = BarangMasukDetail::where('id_barang', $barang->id)
+            ->where('jumlah_tersisa', '>', 0)
+            ->get();
+
+        $grouped = $details->groupBy(function ($d) {
+            return $d->tanggal_kadaluarsa ? $d->tanggal_kadaluarsa->format('Y-m-d') : 'Tidak Ada Tanggal';
+        });
+
+        $expiries = $grouped->map(function ($items, $key) {
+            return [
+                'tanggal' => $key,
+                'stok' => $items->sum('jumlah_tersisa'),
+            ];
+        })->values();
+
+        return view('pages.barangs.detail', compact('barang', 'expiries'));
     }
 
     public function edit(Barang $barang)
