@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
-use App\Models\Barang;
-use App\Models\Satuan;
-use App\Models\Manajer;
-use App\Models\Kategori;
-use App\Models\Supplier;
-use Illuminate\Http\Request;
-use App\Models\BarangMasukDetail;
 use App\Http\Requests\BarangRequest;
+use App\Models\Barang;
+use App\Models\BarangKeluarDetail;
+use App\Models\BarangMasukDetail;
+use App\Models\Kategori;
+use App\Models\Manajer;
+use App\Models\Satuan;
+use App\Models\Supplier;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class BarangController extends Controller
@@ -133,24 +134,81 @@ class BarangController extends Controller
 
     public function show(Barang $barang)
     {
-        $details = BarangMasukDetail::where('id_barang', $barang->id)
-            ->where('jumlah_tersisa', '>', 0)
+        // Ambil semua data
+        $masukDetails = BarangMasukDetail::with('barangMasuk')
+            ->where('id_barang', $barang->id)
             ->get();
 
-        $grouped = $details->groupBy(function ($d) {
-            return $d->tanggal_kadaluarsa ? $d->tanggal_kadaluarsa->format('Y-m-d') : 'Tidak Ada Tanggal';
+        $keluarDetails = BarangKeluarDetail::with([
+            'barangKeluar',
+            'barangMasukDetail.barangMasuk'
+        ])
+            ->where('id_barang', $barang->id)
+            ->get();
+
+        // === TOTAL STOK SAAT INI ===
+        $totalStok = $masukDetails->sum('jumlah_tersisa');
+
+        // === HISTORY GABUNGAN (MASUK + KELUAR) ===
+        $histories = collect();
+
+        // Barang Masuk
+        foreach ($masukDetails as $md) {
+            $histories->push((object)[
+                'tanggal'        => $md->barangMasuk->tanggal_masuk ?? $md->created_at,
+                'jenis'          => 'Masuk',
+                'nomor_transaksi' => $md->barangMasuk->nomor_transaksi ?? 'N/A',
+                'nomor_ref'      => '-',
+                'jumlah_masuk'   => $md->jumlah,
+                'jumlah_keluar'  => null,
+                'kadaluarsa'     => $md->tanggal_kadaluarsa,
+                'catatan'        => $md->barangMasuk->catatan ?? '-',
+            ]);
+        }
+
+        // Barang Keluar
+        foreach ($keluarDetails as $kd) {
+            $histories->push((object)[
+                'tanggal'        => $kd->barangKeluar->tanggal_keluar ?? $kd->created_at,
+                'jenis'          => 'Keluar',
+                'nomor_transaksi' => $kd->barangKeluar->nomor_transaksi ?? 'N/A',
+                'nomor_ref'      => optional($kd->barangMasukDetail?->barangMasuk)->nomor_transaksi ?? 'N/A',
+                'jumlah_masuk'   => null,
+                'jumlah_keluar'  => $kd->jumlah,
+                'kadaluarsa'     => optional($kd->barangMasukDetail)->tanggal_kadaluarsa,
+                'catatan'        => $kd->barangKeluar->catatan ?? '-',
+            ]);
+        }
+
+        // Urutkan dari yang paling baru
+        $histories = $histories->sortByDesc('tanggal')->values();
+
+        // === STOK PER KADALUARSA ===
+        $grouped = $masukDetails->where('jumlah_tersisa', '>', 0)->groupBy(function ($d) {
+            $expiry = $d->tanggal_kadaluarsa ? $d->tanggal_kadaluarsa->format('Y-m-d') : 'Tidak Ada Tanggal';
+            $masuk  = $d->barangMasuk && $d->barangMasuk->tanggal_masuk
+                ? $d->barangMasuk->tanggal_masuk->format('Y-m-d')
+                : 'Tidak Ada Tanggal';
+            return $expiry . '|' . $masuk;
         });
 
         $expiries = $grouped->map(function ($items, $key) {
+            [$tanggal, $tanggal_masuk] = explode('|', $key);
             return [
-                'tanggal' => $key,
-                'stok' => $items->sum('jumlah_tersisa'),
+                'tanggal'        => $tanggal,
+                'tanggal_masuk'  => $tanggal_masuk,
+                'jumlah'         => $items->sum('jumlah'),
+                'jumlah_tersisa' => $items->sum('jumlah_tersisa'),
             ];
-        })->values();
+        })->sortBy('tanggal_masuk')->values();
 
-        return view('pages.barangs.detail', compact('barang', 'expiries'));
+        return view('pages.barangs.detail', compact(
+            'barang',
+            'totalStok',
+            'expiries',
+            'histories'
+        ));
     }
-
     public function edit(Barang $barang)
     {
         $kategoris = Kategori::all();

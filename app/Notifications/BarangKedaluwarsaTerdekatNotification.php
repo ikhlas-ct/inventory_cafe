@@ -29,7 +29,7 @@ class BarangKedaluwarsaTerdekatNotification extends Notification
             'tanggal_kadaluarsa' => $this->tanggalKadaluarsa->format('Y-m-d'),
             'sisa_hari'          => $this->sisaHari,
             'pesan'              => "Barang {$this->namaBarang} akan kedaluwarsa dalam {$this->sisaHari} hari.",
-            'url'                => route('barangs.show', $this->barangId),   // ← INI LINK YANG KAMU MINTA
+            'url'                => route('barangs.show', $this->barangId),   
         ];
     }
 }

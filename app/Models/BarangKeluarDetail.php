@@ -15,13 +15,14 @@ class BarangKeluarDetail extends Model
     protected $fillable = [
         'id_barang_keluar',
         'id_barang',
+        'id_barang_masuk_detail',
         'jumlah'
 
     ];
 
     protected $casts = [
         'jumlah' => 'integer',
-        'deleted_at' => 'datetime', 
+        'deleted_at' => 'datetime',
     ];
 
 
@@ -32,5 +33,9 @@ class BarangKeluarDetail extends Model
     public function barangKeluar()
     {
         return $this->belongsTo(Barangkeluar::class, 'id_barang_keluar', 'id');
+    }
+    public function barangMasukDetail()
+    {
+        return $this->belongsTo(BarangMasukDetail::class, 'id_barang_masuk_detail', 'id');
     }
 }
